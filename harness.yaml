@@ -1,0 +1,47 @@
+# harness.yaml — Centralized guardrails for the When-to-Escalate repo.
+# This is the single structured source for operating boundaries.
+# AGENTS.md references the rules here; keep both in sync.
+
+project:
+  name: when-to-escalate
+  description: "Cascade inference demo: run a cheap small model first, escalate to a frontier model only when the router is unsure, and measure cost per successful task."
+  milestones: [M1, M2, M3]
+  strict_order: true  # M1 must pass before M2, etc.
+
+guardrails:
+  # Agents may not declare a feature passing without recorded evidence.
+  evidence_required_for_passing: true
+  # Only one feature may be in_progress at any time.
+  single_in_progress: true
+  # No secrets, no real private data in the public repo.
+  no_secrets_in_repo: true
+  synthetic_data_only: true
+  # Real backends are configured only through environment variables.
+  real_backends_require_env: true
+  # All source comments in English.
+  comments_language: en
+  # Every mock-derived metric must be labelled as mock.
+  label_mock_metrics: true
+
+verification:
+  standard_command: "python3 -m pytest cascade/tests/ -v"
+  web_metrics_command: "node cascade/tests/verify_web_metrics.js"
+  must_pass_before_feature_done: true
+
+paths:
+  agents_md: AGENTS.md
+  # Harness state and the internal spec live in private/ (gitignored, never published).
+  state_dir: private/
+  method: docs/02-method.md
+  eval: docs/03-eval.md
+  schema: cascade/src/schema.py
+  pricing: cascade/src/pricing.py
+  router: cascade/src/router.py
+  engine: cascade/src/engine.py
+  backends: cascade/src/backends.py
+  gateway: cascade/src/gateway.py
+  replay: cascade/src/replay.py
+  pricing_config: cascade/configs/pricing.yaml
+  policy_config: cascade/configs/policy.yaml
+
+status_enum: [not_started, in_progress, blocked, passing]

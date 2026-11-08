@@ -1,0 +1,15 @@
+# pricing.yaml — Illustrative example prices for the cascade demo.
+#
+# NOTE: These values are EXAMPLE prices chosen so the demo arithmetic is easy
+# to check by hand. They are not a quote from any vendor. Replace them with
+# current official prices before drawing conclusions about real unit economics.
+currency: USD
+unit: per_million_tokens
+
+models:
+  small:
+    input: 0.15
+    output: 0.60
+  frontier:
+    input: 3.00
+    output: 12.00

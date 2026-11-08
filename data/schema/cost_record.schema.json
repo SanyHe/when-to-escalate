@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CostRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "model",
+    "attempts",
+    "cost_usd",
+    "latency_ms",
+    "success",
+    "cost_per_successful_task_usd"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model": {
+      "type": "string",
+      "enum": [
+        "small",
+        "frontier"
+      ]
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cost_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "latency_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "success": {
+      "type": "boolean"
+    },
+    "cost_per_successful_task_usd": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "if": {
+    "properties": {
+      "success": {
+        "const": false
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "cost_per_successful_task_usd": {
+        "const": 0
+      }
+    }
+  }
+}

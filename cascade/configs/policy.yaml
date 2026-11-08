@@ -1,0 +1,30 @@
+# policy.yaml — Routing and cascade policy for the demo.
+#
+# All values are deterministic inputs, not learned parameters. The confidence
+# values are illustrative estimates of how sure the small model is on each
+# difficulty band; a real deployment should replace them with measured
+# confidence from the small model (e.g. logprob margin or self-consistency).
+
+confidence_threshold: 0.66
+
+# Base confidence of the small model by expected difficulty. This is the
+# deterministic *prior*: a real backend that returns token log-probabilities
+# replaces it with the model-reported confidence before escalation.
+confidence_by_difficulty:
+  low: 0.93
+  medium: 0.78
+  high: 0.52
+
+# Maximum attempts per policy. Fixed policies retry their own model on
+# failure; cascade escalates instead of retrying the small model.
+max_attempts:
+  all_frontier: 1
+  all_small: 2
+  cascade: 1
+
+# Synthetic task flow composition (F1.5). simple + medium are the bulk;
+# complex is the ~20% tail. Values are counts, not probabilities.
+task_mix:
+  simple: 50
+  medium: 30
+  complex: 20

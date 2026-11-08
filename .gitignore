@@ -1,0 +1,48 @@
+# ===== 内部 / 私有内容（严禁进入公开仓库）=====
+private/
+.trae-html-share-packages/
+**/real_exports/
+**/redaction/
+secrets/
+*.secret
+*.key
+*.pem
+.env
+.env.*
+!.env.example
+
+# 真实数据与中间产物
+*.real.json
+data/real/
+data/private/
+
+# ===== 大体积模型权重（放 Release / HF，不入库）=====
+*.gguf
+*.bin
+*.safetensors
+weights/
+checkpoints/
+artifacts/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# ===== Node / Web =====
+node_modules/
+dist/
+build/
+.cache/
+
+# ===== 系统 / 编辑器 =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

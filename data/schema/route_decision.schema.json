@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RouteDecision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "policy",
+    "selected_model",
+    "confidence",
+    "escalated",
+    "reason"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "policy": {
+      "type": "string",
+      "enum": [
+        "all_frontier",
+        "cascade",
+        "all_small"
+      ]
+    },
+    "selected_model": {
+      "type": "string",
+      "enum": [
+        "small",
+        "frontier"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "escalated": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "policy": {
+            "const": "all_frontier"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "selected_model": {
+            "const": "frontier"
+          },
+          "escalated": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "policy": {
+            "const": "all_small"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "selected_model": {
+            "const": "small"
+          },
+          "escalated": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "policy": {
+            "const": "cascade"
+          },
+          "escalated": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "selected_model": {
+            "const": "frontier"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>When to Escalate — 何时该升级</title>
+  <meta name="description" content="级联推理成本面板：小模型先做，低置信或失败才升级旗舰模型，实时比较全旗舰 / 级联 / 全小模型的单位经济。">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <span class="brand-name">When to Escalate</span>
+        <span class="brand-sub" data-i18n="brand.sub">cascade inference demo · 何时该升级</span>
+      </div>
+      <div class="badges">
+        <span class="badge badge-mock" id="modeBadge" data-i18n="badge.mock" data-i18n-title="badge.mockTitle">MOCK LEDGER</span>
+        <button class="lang-btn" id="langBtn" type="button" data-i18n-title="lang.switch" aria-label="切换到英文">
+          <span data-i18n="lang.button">EN</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <h1 data-i18n="hero.title">什么时候该升级到旗舰模型？</h1>
+        <p data-i18n-html="hero.body">
+          同一个任务流分别交给三种架构：全旗舰、智能级联、全小模型。级联先让小模型作答，
+          只有失败或置信度低于阈值时才升级旗舰，并把每一次尝试的成本都计入
+          <code>CPST</code>（Cost per Successful Task）。切换策略、拖动参数，实时看单位经济如何变化。
+        </p>
+      </div>
+      <div class="model-switch" id="policySwitch" role="tablist" aria-label="策略切换"></div>
+    </section>
+
+    <div class="banner hidden" id="banner"></div>
+
+    <section class="panel live-panel">
+      <div class="panel-head">
+        <div>
+          <h2 data-i18n="live.title">在线模式（自托管网关）</h2>
+          <p class="muted" data-i18n="live.sub">连接 OpenAI 兼容的级联网关，用真实请求验证路由与成本</p>
+        </div>
+        <span class="badge badge-bad" id="liveBadge" data-i18n="live.badgeOff">OFFLINE</span>
+      </div>
+      <div class="live-form">
+        <label class="live-field">
+          <span data-i18n="live.baseLabel">网关地址</span>
+          <input id="liveBase" type="url" spellcheck="false" placeholder="http://localhost:8000" autocomplete="off">
+        </label>
+        <div class="live-actions">
+          <button class="btn btn-ghost" id="liveTest" type="button" data-i18n="live.test">测试连接</button>
+          <button class="btn btn-primary" id="liveSave" type="button" data-i18n="live.enable">启用</button>
+        </div>
+      </div>
+      <p class="live-msg muted" id="liveMsg" data-i18n="live.hint">未启用时页面只回放 mock 账本，不会发起任何网络请求。</p>
+      <div class="live-run hidden" id="liveRun">
+        <label class="live-field">
+          <span data-i18n="live.promptLabel">测试任务</span>
+          <textarea id="livePrompt" rows="2" spellcheck="false">今天东莞天气怎么样？需要带伞吗？</textarea>
+        </label>
+        <div class="live-actions">
+          <button class="btn btn-primary" id="liveRunBtn" type="button" data-i18n="live.run">发送请求</button>
+        </div>
+        <div class="live-result hidden" id="liveResult"></div>
+      </div>
+    </section>
+
+    <main class="grid">
+      <section class="panel replay-panel">
+        <div class="panel-head">
+          <div>
+            <h2 data-i18n="replay.title">逐任务路由链</h2>
+            <p class="muted" id="replaySub" data-i18n="replay.sub">确定性 mock 账本 · 100 条任务</p>
+          </div>
+          <span class="counter" id="taskCounter">0 / 0</span>
+        </div>
+
+        <div class="controls" id="filterBar">
+          <button class="btn btn-primary" data-filter="all" type="button" data-i18n="filter.all">全部</button>
+          <button class="btn" data-filter="escalated" type="button" data-i18n="filter.escalated">仅升级</button>
+          <button class="btn" data-filter="failed" type="button" data-i18n="filter.failed">仅失败</button>
+        </div>
+
+        <div class="task-list" id="taskList"></div>
+      </section>
+
+      <section class="right-column">
+        <div class="panel metrics-panel">
+          <div class="panel-head">
+            <div>
+              <h2 data-i18n="metrics.title">实时指标</h2>
+              <p class="muted" id="metricsSub" data-i18n="metrics.sub">随策略与参数实时重算 · mock</p>
+            </div>
+            <span class="badge badge-mock" data-i18n="badge.mock">MOCK</span>
+          </div>
+          <div class="metric-grid" id="metricGrid"></div>
+        </div>
+
+        <div class="panel params-panel">
+          <div class="panel-head">
+            <div>
+              <h2 data-i18n="params.title">可调参数</h2>
+              <p class="muted" data-i18n="params.sub">阈值、单价与流量混合会实时重算单位经济</p>
+            </div>
+            <button class="btn btn-ghost" id="resetParams" type="button" data-i18n="params.reset">恢复默认</button>
+          </div>
+          <div class="param-grid" id="paramGrid"></div>
+          <p class="params-note" data-i18n="params.mockNote">示例定价与 mock 轨迹仅用于演示口径，不代表任何厂商报价。</p>
+        </div>
+
+        <div class="panel compare-panel">
+          <div class="panel-head">
+            <div>
+              <h2 data-i18n="compare.title">三策略对比</h2>
+              <p class="muted" data-i18n="compare.sub">同一任务流 · 同一套参数 · mock 值</p>
+            </div>
+          </div>
+          <div class="compare-grid" id="compareGrid"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p data-i18n-html="footer">
+        纯静态页面 · 默认回放确定性 mock 账本；在线模式需要你自托管的 OpenAI 兼容网关，连接失败会保留离线回放。
+      </p>
+    </footer>
+  </div>
+
+  <script src="js/metrics.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/remote.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

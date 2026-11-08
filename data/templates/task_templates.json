@@ -1,0 +1,108 @@
+{
+  "_meta": {
+    "description": "Seed task templates for the cascade demo. All prompts are synthetic and involve no real personal data.",
+    "version": "1"
+  },
+  "simple": [
+    {
+      "prompt": "今天东莞天气怎么样？需要带伞吗？",
+      "tags": ["weather", "single_lookup"]
+    },
+    {
+      "prompt": "把这句话翻译成英文：会议改到周四下午三点。",
+      "tags": ["translation", "short_text"]
+    },
+    {
+      "prompt": "帮我把这条会议纪要压缩成三行要点。",
+      "tags": ["summarize", "short_text"]
+    },
+    {
+      "prompt": "计算 128 乘以 24 等于多少，并给出计算过程。",
+      "tags": ["math", "single_step"]
+    },
+    {
+      "prompt": "从这封邮件里提取发件人、截止日期和需要我做的事。",
+      "tags": ["email", "extraction"]
+    },
+    {
+      "prompt": "把明天上午十点的日程改到下午两点。",
+      "tags": ["calendar", "single_action"]
+    },
+    {
+      "prompt": "给这段产品描述起三个标题，每个不超过十个字。",
+      "tags": ["copywriting", "short_text"]
+    },
+    {
+      "prompt": "这个 JSON 里的 version 字段是什么值？",
+      "tags": ["json", "single_lookup"]
+    }
+  ],
+  "medium": [
+    {
+      "prompt": "对比这三家云服务商的 GPU 按小时价格，给出性价比排序和推荐。",
+      "tags": ["comparison", "multi_source"]
+    },
+    {
+      "prompt": "把这封客户投诉邮件改写成一份内部跟进清单，按优先级排列。",
+      "tags": ["email", "planning"]
+    },
+    {
+      "prompt": "根据这份周报，找出三个进度风险并分别给出缓解建议。",
+      "tags": ["analysis", "risk"]
+    },
+    {
+      "prompt": "帮我规划下周从东莞到上海的两日行程，预算控制在三千元以内。",
+      "tags": ["travel", "planning"]
+    },
+    {
+      "prompt": "阅读这段接口文档，写出一个调用示例并说明错误处理。",
+      "tags": ["coding", "documentation"]
+    },
+    {
+      "prompt": "把这份中文产品介绍改写成适合英文官网的版本，保持信息完整。",
+      "tags": ["translation", "marketing"]
+    },
+    {
+      "prompt": "从这组销售数据里找出环比下降的原因，并给出三条行动建议。",
+      "tags": ["data_analysis", "recommendation"]
+    },
+    {
+      "prompt": "比较两份简历与岗位要求的匹配度，给出面试问题清单。",
+      "tags": ["recruiting", "comparison"]
+    }
+  ],
+  "complex": [
+    {
+      "prompt": "设计一个跨三个平台的比价流程：抓取价格、处理汇率、输出最低价和可信度说明。",
+      "tags": ["multi_step", "research", "pricing"]
+    },
+    {
+      "prompt": "基于这份 20 页的技术方案，评估上线风险、给出分阶段迁移计划与回滚方案。",
+      "tags": ["long_context", "planning", "risk"]
+    },
+    {
+      "prompt": "写一份关于级联推理成本优化的调研报告，包含三种架构的假设、指标与结论。",
+      "tags": ["research", "writing", "unit_economics"]
+    },
+    {
+      "prompt": "分析这段分布式系统日志，定位可能的根因，并给出验证步骤与修复补丁思路。",
+      "tags": ["debugging", "distributed_system"]
+    },
+    {
+      "prompt": "为一个多租户 SaaS 设计配额与限流方案，说明边界条件、失败模式与监控指标。",
+      "tags": ["architecture", "multi_tenant", "reliability"]
+    },
+    {
+      "prompt": "把这份季度财报与三家同业公司对比，构建估值假设并写出敏感性分析。",
+      "tags": ["finance", "comparison", "modeling"]
+    },
+    {
+      "prompt": "设计一套面向 always-on agent 的事件优先级策略，给出状态机、评估指标和灰度步骤。",
+      "tags": ["agent", "design", "evaluation"]
+    },
+    {
+      "prompt": "审查这段包含并发写入的代码，指出数据竞争风险并给出可验证的修复方案。",
+      "tags": ["code_review", "concurrency"]
+    }
+  ]
+}
