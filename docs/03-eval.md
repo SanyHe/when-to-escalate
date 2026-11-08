@@ -1,6 +1,6 @@
 # 03 · 评测、账本与边界
 
-> 所有数字默认来自 `data/eval/mock_ledger.json`（确定性 mock 后端），不是真实模型测量值。真实后端评测（F2.5）目前 **blocked**，原因见第 8 节。
+> 所有数字默认来自 `data/eval/mock_ledger.json`（确定性 mock 后端），不是真实模型测量值。真实后端目前只有 20 条任务的试点（含 LLM 判定），仍不作为生产结论，详见第 8 节。
 
 ## 1. 评测问题
 
@@ -99,23 +99,64 @@ node cascade/tests/verify_web_metrics.js
 - 两种路径都由 `test_engine.py` 用脚本化后端强制触发，避免"碰巧通过"。
 - `export_trace()` 输出形如 `task_0001 (cascade) -> small ... -> frontier ...` 的决策链，可直接贴进 evidence。
 
-## 8. 真实后端评测（F2.5）：Blocked
+## 8. 真实后端评测（F2.5）：20 条任务试点
 
-F2.5 需要在真实小模型（vLLM）与真实旗舰 endpoint 上跑同一任务流，并与 mock 口径分开报告。当前环境缺少：
+真实链路已跑通：`qwen-plus`（小模型）→ `qwen-max`（旗舰），OpenAI 兼容端点，价格用官方千问价（`cascade/configs/pricing.qwen.yaml`，汇率 7.2；small 0.111/0.278、frontier 0.333/1.333 USD / 1M tokens）。样本是从 100 条种子任务中均匀抽取的 20 条（simple 11 / medium 6 / complex 3），两种角色统一 `max_tokens=1024`，结果单独保存在 `data/eval/real_ledger.json`，不与 mock 账本合并。
 
-- GPU 主机或可用的 vLLM 服务；
-- 旗舰模型的 endpoint 与凭据（只能通过环境变量注入）。
+### 8.1 服务层结果（HTTP 成功口径）
 
-因此 F2.5 标记为 **blocked**，而不是 passing。解除阻塞后应执行：
+| 策略 | 总成本 | CPST | 成功率 | 升级率 | 平均延迟 | 平均尝试 | 相对全旗舰 |
+|---|---|---|---|---|---|---|---|
+| `all_frontier` | $0.005683 | $0.000284 | 100% | 0% | 6671 ms | 1.000 | 0% |
+| `cascade` | $0.002954 | $0.000148 | 100% | 0% | 12188 ms | 1.000 | **48.03%** |
+| `all_small` | $0.002962 | $0.000148 | 100% | 0% | 12346 ms | 1.000 | 47.89% |
 
-1. `export CASCADE_SMALL_BASE_URL=...` / `CASCADE_FRONTIER_*`；
-2. 用真实后端跑三策略，记录成功率、延迟、token 用量与失败原因；
-3. 把真实账本另存为 `data/eval/real_ledger.json`，与 mock 账本分表展示；
-4. 只有真实数据支持时，才可以对外声称"级联降低 CPST"的生产结论。
+怎么读：
+
+- 统一输出预算后，级联/全小模型相对全旗舰**省约 48%**，与 mock 的 49.87% 惊人地接近——5 条试点时只有 1%–6%，说明当时的差距主要是小模型冗长输出造成的假象（qwen-plus 曾单任务生成 2342 个 completion token，现在被 1024 上限截断）。
+- **升级率为 0%**：qwen-plus 自报置信度中位数 0.8958、最低 0.8023，全部高于阈值 0.66，cascade 实际上退化成了 all_small（两者成本差 $0.000008 只是请求顺序差异）。
+- qwen-max 的自报置信度恒为 1.0，疑似该模型不返回有效 logprobs；置信度信号目前只在 qwen-plus 上可信。
+
+### 8.2 判定口径（LLM-as-a-Judge）
+
+HTTP 成功不等于任务被解决。离线判定（`cascade/src/judge.py` / `judge_ledger.py`，严格 rubric、温度 0、判定不感知策略）把"请提供更多信息"式回答判为失败；判定器自身调用失败（超时/限流）计入 `judge_failures`，**不进判定分母**。
+
+| 策略 | 任务 | 判定成功 | 判定成功率 | CPST（仅服务） | CPST（含判定） | 失败浪费 | 判定成本 |
+|---|---|---|---|---|---|---|---|
+| `all_frontier` | 20（6 条判定失败） | 10/14 | 71.4% | $0.000421 | $0.000665 | $0.001810 | $0.002446 |
+| `cascade` | 20 | 19/20 | 95.0% | $0.000140 | $0.000427 | $0.000308 | $0.005442 |
+| `all_small` | 20 | 19/20 | 95.0% | $0.000141 | $0.000427 | $0.000308 | $0.005437 |
+
+怎么读：
+
+- **判定口径下级联优势扩大**：all_frontier 有 4 条真实质量失败（回答只索要更多信息），按"成功任务成本"口径 CPST 涨到 $0.000421，是 cascade（$0.000140）的 3 倍。qwen-max 回答简短（completion token 中位数 101 vs qwen-plus 545），简短回答更容易不满足严格 rubric。
+- cascade / all_small 唯一的失败是 `task_0066`：预算约束确实被违反（交通费超支），判定成立。
+- 判定成本（$0.0024–$0.0054）再次高于服务成本；含判定后 `all_frontier` 仍是 $0.000665，排名不变但差距缩小。**判定是评测成本，不进线上 CPST**。
+
+### 8.3 复现
+
+```bash
+# 真实三策略（需要 DASHSCOPE_API_KEY，或 CASCADE_SMALL_* / CASCADE_FRONTIER_* 环境变量）
+python3 cascade/src/real_eval.py --limit 20 --max-tokens 1024 \
+    --pricing cascade/configs/pricing.qwen.yaml
+# 离线判定（读取上一步的真实账本，不重新生成答案）
+python3 cascade/src/judge_ledger.py --ledger data/eval/real_ledger.json
+```
+
+产物：`data/eval/real_ledger.{json,md}`、`data/eval/real_ledger_judged.{json,md}`。
+
+### 8.4 得出生产结论前的必做项
+
+1. 样本扩到 50–100 条并按难度分层；当前 complex 只有 3 条，高难度层结论不可信。
+2. 换一个非 qwen-max 的模型做裁判（当前裁判与被测的 all_frontier 答案同源，存在 self-preference 风险），或做双裁判交叉校验。
+3. 用 top-1/top-2 logprob margin 或自一致性替代平均 token 概率，并按真实分布重新校准阈值——当前 0.66 阈值下升级率 0%，置信度信号没有起到筛选作用。
+4. 判定调用本身需要重试与告警：6/20 的 judge failure 率（all_frontier 列）说明裁判通道不够稳。
 
 ## 9. 已知限制
 
 - `success` 在 mock 中是概率事件，不代表真实答案质量；真实评测需要任务级 rubric 或人工标注。
-- 置信度来自规则 + 稳定抖动，不是模型自带的校准信号；真实部署应替换为 logprob margin、self-consistency 或学习型分类器。
-- 定价是示例值；任何真实成本结论都必须先替换为当前官方价格。
-- 100 条任务只用于验证账本与交互；生产结论需要更大样本与分布外任务。
+- 置信度来自规则 + 稳定抖动；真实试点已确认 qwen-plus 平均 token 概率（0.80–0.99）全部高于阈值 0.66，升级率 0%，生产前必须重新校准。
+- 小模型输出长度差异会主导真实成本；真实评测已统一 `max_tokens=1024`，比较策略前必须固定输出预算。
+- 定价是示例值（mock）与官方千问价（真实）各一套；任何成本结论都必须注明用的是哪套价格与汇率。
+- 20 条真实任务只是试点：方向性信号（统一预算后省约 48%、判定口径下 CPST 差 3 倍）可引用，绝对数字不构成生产结论；mock 的 100 条任务只用于验证账本与交互。
+- 判定器本身有偏差和成本（判定花费高于服务花费），且当前裁判与被测旗舰模型同源；`CPST（含判定）` 与仅服务成本必须分开报告，判定器自身失败单独计数。

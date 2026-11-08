@@ -163,11 +163,14 @@ class OpenAICompatibleBackend:
                  api_key: str | None = None, timeout_s: float = 30.0,
                  client: Optional[httpx.Client] = None,
                  request_logprobs: bool = True,
-                 logprob_top_n: int = 3) -> None:
+                 logprob_top_n: int = 3,
+                 max_tokens: Optional[int] = None) -> None:
         if not base_url:
             raise ValueError("base_url is required")
         if role not in ("small", "frontier"):
             raise ValueError(f"unknown backend role: {role}")
+        if max_tokens is not None and max_tokens <= 0:
+            raise ValueError("max_tokens must be positive")
         self.base_url = base_url.rstrip("/")
         self.model_name = model_name
         self.role = role
@@ -176,6 +179,7 @@ class OpenAICompatibleBackend:
         self._client = client
         self.request_logprobs = request_logprobs
         self.logprob_top_n = logprob_top_n
+        self.max_tokens = max_tokens
 
     @property
     def endpoint(self) -> str:
@@ -207,6 +211,10 @@ class OpenAICompatibleBackend:
             "messages": [{"role": "user", "content": task["prompt"]}],
             "temperature": 0,
         }
+        if self.max_tokens is not None:
+            # Same output budget for every role; otherwise a verbose small
+            # model distorts the cost comparison.
+            payload["max_tokens"] = self.max_tokens
         if self.request_logprobs:
             payload["logprobs"] = True
             payload["top_logprobs"] = self.logprob_top_n

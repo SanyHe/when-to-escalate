@@ -46,6 +46,8 @@ A feature is done when all of the following are true:
 | Verify web metrics | `node cascade/tests/verify_web_metrics.js` |
 | Regenerate seed tasks | `python3 cascade/src/gen_tasks.py` |
 | Build the three-policy mock ledger | `python3 cascade/src/replay.py` |
+| Run the real three-policy eval | `python3 cascade/src/real_eval.py --limit 5 --pricing cascade/configs/pricing.qwen.yaml` |
+| Judge a real ledger offline | `python3 cascade/src/judge_ledger.py --ledger data/eval/real_ledger.json` |
 | Serve the gateway (needs backends) | `uvicorn cascade.src.gateway:app --port 8000` |
 | Preview the static panel | `python3 -m http.server 8765 --directory web` |
 
@@ -57,6 +59,8 @@ Key paths:
 - Backend adapters: [`cascade/src/backends.py`](./cascade/src/backends.py)
 - OpenAI-compatible gateway: [`cascade/src/gateway.py`](./cascade/src/gateway.py)
 - Replay / ledger: [`cascade/src/replay.py`](./cascade/src/replay.py)
+- Real-backend eval: [`cascade/src/real_eval.py`](./cascade/src/real_eval.py)
+- Offline judge: [`cascade/src/judge.py`](./cascade/src/judge.py) / [`cascade/src/judge_ledger.py`](./cascade/src/judge_ledger.py)
 - Pricing config: [`cascade/configs/pricing.yaml`](./cascade/configs/pricing.yaml)
 - Policy config: [`cascade/configs/policy.yaml`](./cascade/configs/policy.yaml)
 - Synthetic data: [`data/synthetic/`](./data/synthetic/)
@@ -68,7 +72,9 @@ Tests run offline against deterministic mocks, so no GPU is required. Real
 backends (local vLLM or an OpenAI-compatible cloud endpoint, including Alibaba
 Bailian/Qwen) are optional and configured through environment variables such as
 `CASCADE_SMALL_BASE_URL`, `CASCADE_FRONTIER_BASE_URL` and `DASHSCOPE_API_KEY`.
-Never commit endpoints or keys; see the README for setup.
+The offline judge uses `CASCADE_JUDGE_BASE_URL` / `CASCADE_JUDGE_API_KEY` /
+`CASCADE_JUDGE_MODEL` and falls back to the DashScope key. Never commit
+endpoints or keys; see the README for setup.
 
 ## 6. End-of-Session Checklist
 

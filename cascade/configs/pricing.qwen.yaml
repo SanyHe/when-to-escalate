@@ -1,0 +1,22 @@
+# pricing.qwen.yaml — Real Qwen prices for the F2.5 evaluation.
+#
+# Source: Alibaba Cloud Model Studio model pages, checked 2026-11-08.
+#   qwen-plus: CNY 0.8 / 2.0 per 1M input / output tokens
+#   qwen-max:  CNY 2.4 / 9.6 per 1M input / output tokens
+# Converted with an assumed FX rate of 7.2 CNY per USD. Update the FX rate
+# before quoting absolute USD costs; the cost *ratio* between the two models
+# is independent of the FX assumption.
+#
+# The mock demo keeps using pricing.yaml (illustrative prices) so its ledger
+# and tests stay stable. This file is only for real-backend runs.
+currency: USD
+unit: per_million_tokens
+fx_cny_per_usd: 7.2
+
+models:
+  small:
+    input: 0.111
+    output: 0.278
+  frontier:
+    input: 0.333
+    output: 1.333

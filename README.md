@@ -8,7 +8,7 @@ A runnable **cascade-inference** product demo: every task starts on a cheap smal
 - **Zero keys by default**: the panel is static and bilingual (`zh` / `en`), ready for GitHub Pages.
 - **One gateway**: `POST /v1/chat/completions` returns a standard OpenAI response plus a `cascade` routing/cost block.
 
-> **All default numbers are MOCK.** They come from a deterministic mock backend, not from measured model output. The real-backend eval (F2.5) is blocked until a GPU host or frontier endpoint is available. Prices in `cascade/configs/pricing.yaml` are illustrative examples, not vendor quotes.
+> **All default numbers are MOCK.** They come from a deterministic mock backend, not from measured model output. A 20-task real-backend pilot (qwen-plus → qwen-max, judged) exists in `data/eval/real_ledger*.json` and is reported separately in [docs/03-eval.md](docs/03-eval.md#8-真实后端评测f2520-条任务试点); it is directional evidence, not a production conclusion. Prices in `cascade/configs/pricing.yaml` are illustrative examples, not vendor quotes.
 
 ## Quick start (offline, no GPU, no API key)
 
@@ -151,7 +151,7 @@ private/          local harness state and internal spec (gitignored, not publish
 |---|---|---|
 | M1 — ledger & routing pure functions | Verified | 100-task mock ledger, cost/CPST tests |
 | M2 — engine & service | Locally verified | Engine, fallback and gateway tested with in-process fake/mock backends |
-| F2.5 — real-backend eval | **Blocked** | Needs a GPU host (vLLM) and a frontier endpoint/credential |
+| F2.5 — real-backend eval | **Pilot (20 tasks, judged)** | qwen-plus → qwen-max, shared 1024-token budget: ~48% serving savings; judged CPST gap 3×. Directional, not a production conclusion |
 | M3 — panel | Verified locally | Browser checks for policy switch, live recompute, i18n and online mode |
 | F3.5 — public deployment | Pending | `deploy.yml` is included; a live Pages URL needs repository/Pages permission |
 

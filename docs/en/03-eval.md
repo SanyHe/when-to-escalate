@@ -1,6 +1,6 @@
 # 03 · Evaluation, Ledger and Limits
 
-> Every default number comes from `data/eval/mock_ledger.json` (deterministic mock backend), not from measured model output. The real-backend evaluation (F2.5) is **blocked**; see section 8.
+> Every default number comes from `data/eval/mock_ledger.json` (deterministic mock backend), not from measured model output. The real-backend pilot covers 20 judged tasks and is still not a production conclusion; see section 8.
 
 ## 1. Questions
 
@@ -99,23 +99,64 @@ Outputs:
 - Both paths are forced with scripted backends in `test_engine.py`, so they cannot pass by luck.
 - `export_trace()` produces a chain such as `task_0001 (cascade) -> small ... -> frontier ...` for evidence.
 
-## 8. Real-backend evaluation (F2.5): Blocked
+## 8. Real-backend evaluation (F2.5): 20-task pilot
 
-F2.5 requires a real small model (vLLM) and a real frontier endpoint, with results reported separately from mock. The current environment lacks:
+The real path is running: `qwen-plus` (small) → `qwen-max` (frontier) through an OpenAI-compatible endpoint, priced with the official Qwen rates (`cascade/configs/pricing.qwen.yaml`, FX 7.2; small 0.111/0.278, frontier 0.333/1.333 USD / 1M tokens). The sample is 20 tasks spread across the 100-task flow (simple 11 / medium 6 / complex 3), with a shared `max_tokens=1024` for both roles; results live in `data/eval/real_ledger.json` and are never merged with the mock ledger.
 
-- a GPU host or reachable vLLM service;
-- frontier endpoint credentials, which must be injected through environment variables.
+### 8.1 Serving-level results (HTTP success)
 
-F2.5 is therefore **blocked**, not passing. After unblocking:
+| Policy | Total cost | CPST | Success | Escalation | Avg latency | Avg attempts | Savings vs frontier |
+|---|---|---|---|---|---|---|---|
+| `all_frontier` | $0.005683 | $0.000284 | 100% | 0% | 6671 ms | 1.000 | 0% |
+| `cascade` | $0.002954 | $0.000148 | 100% | 0% | 12188 ms | 1.000 | **48.03%** |
+| `all_small` | $0.002962 | $0.000148 | 100% | 0% | 12346 ms | 1.000 | 47.89% |
 
-1. export `CASCADE_SMALL_BASE_URL` / `CASCADE_FRONTIER_*`;
-2. run all three policies on the real backends and record success, latency, tokens and failure reasons;
-3. save the real ledger as `data/eval/real_ledger.json` and present it separately from mock;
-4. only then may the project claim production cascade economics.
+How to read it:
+
+- With a shared output budget, cascade/all_small save **~48%** versus all-frontier — strikingly close to the mock's 49.87%. The earlier 5-task pilot showed only 1%–6%, which we now know was small-model verbosity (qwen-plus once emitted 2342 completion tokens on a single task; now capped at 1024).
+- **Escalation is 0%**: qwen-plus reported mean token probabilities of 0.80–0.99 (median 0.8958), all above the 0.66 threshold, so cascade degenerates into all_small (the $0.000008 cost gap is just request ordering).
+- qwen-max reports a constant confidence of 1.0 — it apparently does not return usable logprobs, so the confidence signal is only trustworthy on qwen-plus.
+
+### 8.2 Judged results (LLM-as-a-judge)
+
+HTTP success is not task success. The offline judge (`cascade/src/judge.py` / `judge_ledger.py`, strict rubric, temperature 0, policy-blind) fails answers that only ask for more information. Judge-side call failures (timeout / rate limit) are counted as `judge_failures` and **excluded from the judged denominator**.
+
+| Policy | Tasks | Judged passes | Judged success | CPST (serving) | CPST (incl. judge) | Failed spend | Judge cost |
+|---|---|---|---|---|---|---|---|
+| `all_frontier` | 20 (6 judge failures) | 10/14 | 71.4% | $0.000421 | $0.000665 | $0.001810 | $0.002446 |
+| `cascade` | 20 | 19/20 | 95.0% | $0.000140 | $0.000427 | $0.000308 | $0.005442 |
+| `all_small` | 20 | 19/20 | 95.0% | $0.000141 | $0.000427 | $0.000308 | $0.005437 |
+
+How to read it:
+
+- **The cascade advantage widens under judged success**: all_frontier has 4 genuine quality failures (answers that only ask for more information), pushing its CPST to $0.000421 — 3× cascade's $0.000140. qwen-max answers are terse (median 101 completion tokens vs qwen-plus 545), and terse answers fail the strict rubric more often.
+- The only cascade / all_small failure is `task_0066`, where the budget constraint really is violated (transport overspend) — a legitimate verdict.
+- Judge cost ($0.0024–$0.0054) again exceeds serving cost; with judging folded in, all_frontier stays at $0.000665 and the ranking holds. **Judging is an evaluation cost, not an online CPST input.**
+
+### 8.3 Reproduce
+
+```bash
+# Real three-policy run (needs DASHSCOPE_API_KEY or CASCADE_SMALL_* / CASCADE_FRONTIER_*)
+python3 cascade/src/real_eval.py --limit 20 --max-tokens 1024 \
+    --pricing cascade/configs/pricing.qwen.yaml
+# Offline judging (reads the real ledger, does not regenerate answers)
+python3 cascade/src/judge_ledger.py --ledger data/eval/real_ledger.json
+```
+
+Outputs: `data/eval/real_ledger.{json,md}`, `data/eval/real_ledger_judged.{json,md}`.
+
+### 8.4 Required before any production claim
+
+1. Scale to 50–100 tasks and report by difficulty; complex currently has only 3 tasks, so the hard tier is not credible.
+2. Judge with a non-qwen-max model (the current judge shares its family with all_frontier's answers — self-preference risk) or cross-check with two judges.
+3. Replace mean token probability with top-1/top-2 logprob margin or self-consistency, and recalibrate the threshold on the real distribution — at 0.66 the escalation rate is 0%, so confidence currently does no filtering.
+4. Add retries and alerting to the judge itself: a 6/20 judge-failure rate (all_frontier column) shows the judge channel is not yet stable.
 
 ## 9. Known limits
 
 - Mock `success` is a probability event, not a quality label; a real evaluation needs task-level rubrics or human annotation.
-- Confidence is a rule plus stable jitter, not a calibrated model signal; replace it with logprob margin, self-consistency or a learned classifier in production.
-- Prices are examples; replace them with current official prices before quoting real costs.
-- 100 tasks validate the ledger and interactions only; production conclusions need larger and out-of-distribution samples.
+- Confidence is a rule plus stable jitter; the real pilot confirmed qwen-plus mean token probabilities (0.80–0.99) all sit above the 0.66 threshold, so escalation is 0% and the threshold must be recalibrated before production.
+- Small-model output length dominates real cost; the real eval pins `max_tokens=1024` for both roles, and every policy comparison must fix the output budget first.
+- There are two price sets (illustrative mock and official Qwen); every cost claim must name the price file and FX.
+- 20 real tasks are a pilot: the directional signals (~48% savings with a shared budget, 3× CPST gap under judged success) are quotable, but the absolute numbers are not a production conclusion; the 100 mock tasks only validate the ledger and interactions.
+- The judge has its own bias and cost (judging costs more than serving), and the current judge shares its family with the frontier model under test; report `CPST (incl. judge)` separately from serving CPST and count judge-side failures separately.

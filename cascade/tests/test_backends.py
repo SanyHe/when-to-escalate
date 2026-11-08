@@ -215,6 +215,29 @@ def test_request_logprobs_can_be_disabled():
     assert "top_logprobs" not in captured["payload"]
 
 
+def test_openai_backend_applies_shared_max_tokens():
+    captured = {}
+
+    def handler(request):
+        captured["payload"] = json.loads(request.content)
+        return httpx.Response(
+            200, json={"choices": [{"message": {"content": "ok"}}]}
+        )
+
+    make_backend(handler, max_tokens=1024).complete(TASK)
+    assert captured["payload"]["max_tokens"] == 1024
+
+    make_backend(handler).complete(TASK)
+    assert "max_tokens" not in captured["payload"]
+
+
+def test_openai_backend_rejects_non_positive_max_tokens():
+    with pytest.raises(ValueError):
+        OpenAICompatibleBackend(
+            "https://api.example.com", "vendor-model", role="small", max_tokens=0
+        )
+
+
 def test_confidence_from_logprobs_handles_missing_and_legacy_shapes():
     assert confidence_from_logprobs(None) is None
     assert confidence_from_logprobs({"content": []}) is None

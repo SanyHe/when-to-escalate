@@ -8,7 +8,7 @@
 - **默认零密钥**：面板纯静态、中英双语（`zh` / `en`），可直接部署到 GitHub Pages。
 - **一个网关**：`POST /v1/chat/completions` 返回标准 OpenAI 响应，并附加 `cascade` 路由与成本信息。
 
-> **默认全部数字均为 MOCK。** 它们来自确定性 mock 后端，不是真实模型输出。真实后端评测（F2.5）在拿到 GPU 主机或旗舰 endpoint 之前保持 blocked。`cascade/configs/pricing.yaml` 中的价格是示例值，不代表任何厂商报价。
+> **默认全部数字均为 MOCK。** 它们来自确定性 mock 后端，不是真实模型输出。20 条任务的真实后端试点（qwen-plus → qwen-max，含 LLM 判定）在 `data/eval/real_ledger*.json`，单独报告于 [docs/03-eval.md](docs/03-eval.md#8-真实后端评测f2520-条任务试点)，属方向性证据而非生产结论。`cascade/configs/pricing.yaml` 中的价格是示例值，不代表任何厂商报价。
 
 ## 快速开始（离线，无 GPU、无 API Key）
 
@@ -150,7 +150,7 @@ private/          本地 harness 状态与内部规格（gitignore，不发布�
 |---|---|---|
 | M1 账本与路由纯函数 | 已验证 | 100 条 mock 任务账本，成本/CPST 单测 |
 | M2 引擎与服务化 | 本地已验证 | 引擎、fallback、网关均用进程内 fake/mock 后端测试 |
-| F2.5 真实后端评测 | **Blocked** | 需要 GPU 主机（vLLM）与旗舰 endpoint/凭据 |
+| F2.5 真实后端评测 | **试点（20 条，含判定）** | qwen-plus → qwen-max、统一 1024 token 预算：服务层省约 48%；判定口径 CPST 差 3 倍。方向性证据，非生产结论 |
 | M3 面板 | 本地已验证 | 浏览器检查策略切换、实时重算、双语与在线模式 |
 | F3.5 公开部署 | 待完成 | 已提供 `deploy.yml`；线上 Pages URL 需要仓库/Pages 权限 |
 
