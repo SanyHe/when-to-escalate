@@ -164,7 +164,8 @@ class OpenAICompatibleBackend:
                  client: Optional[httpx.Client] = None,
                  request_logprobs: bool = True,
                  logprob_top_n: int = 3,
-                 max_tokens: Optional[int] = None) -> None:
+                 max_tokens: Optional[int] = None,
+                 system_prompt: Optional[str] = None) -> None:
         if not base_url:
             raise ValueError("base_url is required")
         if role not in ("small", "frontier"):
@@ -180,6 +181,8 @@ class OpenAICompatibleBackend:
         self.request_logprobs = request_logprobs
         self.logprob_top_n = logprob_top_n
         self.max_tokens = max_tokens
+        # Optional role-level instruction; used to test brevity as a cost lever.
+        self.system_prompt = system_prompt
 
     @property
     def endpoint(self) -> str:
@@ -206,9 +209,13 @@ class OpenAICompatibleBackend:
 
     def complete(self, task: Dict[str, Any], attempt: int = 1) -> Dict[str, Any]:
         started = time.perf_counter()
+        messages: List[Dict[str, str]] = []
+        if self.system_prompt:
+            messages.append({"role": "system", "content": self.system_prompt})
+        messages.append({"role": "user", "content": task["prompt"]})
         payload: Dict[str, Any] = {
             "model": self.model_name,
-            "messages": [{"role": "user", "content": task["prompt"]}],
+            "messages": messages,
             "temperature": 0,
         }
         if self.max_tokens is not None:

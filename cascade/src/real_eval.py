@@ -45,25 +45,66 @@ POLICIES = ("all_frontier", "cascade", "all_small")
 
 
 def sample_tasks(tasks: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
-    """Pick ``limit`` tasks spread across the full flow.
+    """Pick ``limit`` tasks, stratified by ``kind`` when the field exists.
 
-    Even spacing keeps the simple/medium/complex mix closer to the full
-    distribution than simply taking the first N tasks.
+    Proportional allocation (largest remainder) keeps every difficulty tier
+    represented at small sample sizes; within each tier tasks are evenly
+    spaced so the sample still spans the whole flow. Tasks without ``kind``
+    fall back to plain even spacing.
     """
     if limit <= 0:
         raise ValueError("limit must be positive")
     if limit >= len(tasks):
         return list(tasks)
-    step = len(tasks) / float(limit)
-    return [tasks[int(index * step)] for index in range(limit)]
+    if any("kind" not in task for task in tasks):
+        step = len(tasks) / float(limit)
+        return [tasks[int(index * step)] for index in range(limit)]
+
+    groups: Dict[str, List[Dict[str, Any]]] = {}
+    for task in tasks:
+        groups.setdefault(task["kind"], []).append(task)
+    # Largest-remainder proportional allocation across tiers.
+    quotas = {kind: len(group) * limit / len(tasks) for kind, group in groups.items()}
+    counts = {kind: int(quota) for kind, quota in quotas.items()}
+    remaining = limit - sum(counts.values())
+    for kind in sorted(quotas, key=lambda k: quotas[k] - counts[k], reverse=True):
+        if remaining <= 0:
+            break
+        if counts[kind] < len(groups[kind]):
+            counts[kind] += 1
+            remaining -= 1
+
+    picked: List[Dict[str, Any]] = []
+    for kind in ("simple", "medium", "complex"):
+        group = groups.get(kind, [])
+        count = counts.get(kind, 0)
+        if not group or count <= 0:
+            continue
+        step = len(group) / float(count)
+        picked.extend(group[int(index * step)] for index in range(count))
+    return picked
 
 
-def build_backends(timeout_s: float) -> Dict[str, Any]:
-    """Build real backends from environment; never accept hard-coded keys."""
+def build_backends(timeout_s: float, small_model: str | None = None,
+                   frontier_model: str | None = None) -> Dict[str, Any]:
+    """Build real backends from environment; never accept hard-coded keys.
+
+    Model names default to the bailian defaults (qwen-turbo / qwen-max); pass
+    them explicitly so a run cannot silently fall back to a model the account
+    does not serve.
+    """
     if os.environ.get("CASCADE_SMALL_BASE_URL"):
         backends = backends_from_env()
+        if small_model:
+            backends["small"].model_name = small_model
+        if frontier_model:
+            backends["frontier"].model_name = frontier_model
     elif os.environ.get("DASHSCOPE_API_KEY"):
         backends = bailian_backends(timeout_s=timeout_s)
+        if small_model:
+            backends["small"].model_name = small_model
+        if frontier_model:
+            backends["frontier"].model_name = frontier_model
     else:
         raise RuntimeError(
             "Set DASHSCOPE_API_KEY (Bailian) or CASCADE_SMALL_BASE_URL "
@@ -116,10 +157,11 @@ def build_ledger(tasks: List[Dict[str, Any]], pricing: Dict[str, Any],
             "task_count": len(subset),
             "sampled_task_ids": [task["task_id"] for task in subset],
             "max_tokens": max_tokens,
+            "small_system_prompt": getattr(backends["small"], "system_prompt", None),
             "policies": list(POLICIES),
             "backends": {
-                "small": os.environ.get("CASCADE_SMALL_MODEL", "qwen-turbo"),
-                "frontier": os.environ.get("CASCADE_FRONTIER_MODEL", "qwen-max"),
+                role: getattr(backend, "model_name", role)
+                for role, backend in backends.items()
             },
             "pricing": pricing["models"],
             "pricing_file": pricing_path,
@@ -169,7 +211,7 @@ def render_markdown(ledger: Dict[str, Any]) -> str:
         "",
         "> CPST = total cost of successful tasks / successful tasks; retry and "
         "escalation spend is included. Real-model cost figures depend on the "
-        "prices configured in `cascade/configs/pricing.yaml`.",
+        f"prices configured in `{meta['pricing_file']}`.",
         "",
     ]
     return "\n".join(lines)
@@ -191,12 +233,28 @@ def main() -> None:
     parser.add_argument("--max-tokens", type=int, default=None,
                         help="shared completion budget for both roles; keeps the "
                              "cost comparison from being driven by verbosity")
+    parser.add_argument("--threshold", type=float, default=None,
+                        help="override the confidence threshold from policy.yaml "
+                             "for this real run (mock ledger stays at the default)")
+    parser.add_argument("--small-model", default=None,
+                        help="small-model name; overrides CASCADE_SMALL_MODEL")
+    parser.add_argument("--frontier-model", default=None,
+                        help="frontier-model name; overrides CASCADE_FRONTIER_MODEL")
+    parser.add_argument("--small-system-prompt", default=None,
+                        help="system instruction sent only to the small model; "
+                             "use it to test brevity as a cost lever")
     args = parser.parse_args()
 
     tasks = load_tasks(args.tasks)
     pricing = load_pricing(args.pricing)
     policy = load_policy()
-    backends = build_backends(args.timeout)
+    if args.threshold is not None:
+        if not 0.0 <= args.threshold <= 1.0:
+            raise ValueError("--threshold must be between 0 and 1")
+        policy["confidence_threshold"] = args.threshold
+    backends = build_backends(args.timeout, args.small_model, args.frontier_model)
+    if args.small_system_prompt:
+        backends["small"].system_prompt = args.small_system_prompt
     if args.max_tokens is not None:
         for backend in backends.values():
             backend.max_tokens = args.max_tokens
@@ -205,6 +263,16 @@ def main() -> None:
         pricing_path=os.path.relpath(args.pricing, REPO_ROOT),
         max_tokens=args.max_tokens,
     )
+
+    # A backend that fails every call is a misconfiguration (unknown model,
+    # exhausted quota), not an evaluation result; refuse to write that ledger.
+    for policy_name in POLICIES:
+        if ledger["metrics"][policy_name]["success_rate"] == 0.0:
+            names = ledger["_meta"]["backends"]
+            raise RuntimeError(
+                f"{policy_name} succeeded on 0 tasks - check that "
+                f"{names} are served by the endpoint (quota, model name)."
+            )
 
     _write_json(args.out, ledger)
     with open(args.md_out, "w", encoding="utf-8") as handle:

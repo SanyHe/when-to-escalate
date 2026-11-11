@@ -8,7 +8,103 @@ A runnable **cascade-inference** product demo: every task starts on a cheap smal
 - **Zero keys by default**: the panel is static and bilingual (`zh` / `en`), ready for GitHub Pages.
 - **One gateway**: `POST /v1/chat/completions` returns a standard OpenAI response plus a `cascade` routing/cost block.
 
-> **All default numbers are MOCK.** They come from a deterministic mock backend, not from measured model output. A 20-task real-backend pilot (qwen-plus → qwen-max, judged) exists in `data/eval/real_ledger*.json` and is reported separately in [docs/03-eval.md](docs/03-eval.md#8-真实后端评测f2520-条任务试点); it is directional evidence, not a production conclusion. Prices in `cascade/configs/pricing.yaml` are illustrative examples, not vendor quotes.
+> **All default numbers are MOCK.** They come from a deterministic mock backend, not from measured model output. Fifty-task stratified real-backend evaluations (Bailian qwen-plus/qwen-flash → qwen-max, non-Qwen judge, threshold sweeps) live in `data/eval/real_ledger*.json` and are reported in [docs/03-eval.md](docs/03-eval.md#8-真实后端评测f255-条分层样本). Results are **model- and operating-point-dependent**: without an output limit the qwen-plus cascade loses 8.6%; one "≤120 words" instruction brings a matched 80% success point to $0.018454, **7.0% cheaper** than all-frontier. At official Bailian prices, qwen-flash cuts small-model spend another 46.2%, but judged small-model success falls from 44% to 10%; its only matched-80% sweep point is full escalation at $0.019817, **5.0% more** than all-frontier. Savings depend on price, output length, answer quality, task mix and routing signal—not on token price alone. Prices in `cascade/configs/pricing.yaml` are illustrative examples, not vendor quotes.
+
+## Architecture
+
+Online request path — every task tries the small model first; escalation is traceable:
+
+```mermaid
+flowchart LR
+    client[Client<br/>any OpenAI SDK] --> gw[FastAPI gateway<br/>POST /v1/chat/completions]
+    gw --> engine[CascadeEngine]
+    engine --> router[Rule router<br/>threshold + stable jitter]
+    router -->|policy = all_frontier| frontier[(Frontier model<br/>qwen-max)]
+    router --> small[(Small model<br/>qwen-plus + logprobs)]
+    small --> decision{"response ok AND<br/>confidence ≥ threshold?"}
+    decision -->|yes| resp[OpenAI response<br/>+ cascade metadata block]
+    decision -->|no: low confidence| frontier
+    decision -->|no: call failed / timeout| frontier
+    frontier --> resp
+    resp --> ledger[(cost ledger<br/>tokens · latency · route trace)]
+```
+
+Offline evaluation path — mock first, real backends optional, judge separate:
+
+```mermaid
+flowchart TD
+    gen[gen_tasks.py<br/>fixed seed] --> seeds[data/synthetic/seed_tasks.jsonl<br/>100 tasks · 50/30/20]
+    seeds --> replay[replay.py<br/>deterministic mock backends]
+    replay --> mock[data/eval/mock_ledger.json<br/>3 policies · CPST · savings]
+    replay --> webdata[web/data/ledger.json]
+    webdata --> panel[Static cost panel<br/>bilingual · sliders recompute]
+    panel -.->|verify_web_metrics.js| check[7 metrics must match<br/>the Python ledger]
+    seeds --> realeval[real_eval.py<br/>live OpenAI-compatible backends<br/>stratified sample · max_tokens budget]
+    realeval --> real[data/eval/real_ledger.json<br/>kept separate from mock]
+    real --> judge[judge_ledger.py<br/>NON-Qwen judge<br/>strict rubric · temperature 0<br/>policy-blind · judged offline]
+    judge --> judged[data/eval/real_ledger_judged.json<br/>judged CPST + judge cost]
+    judged --> sweep[--sweep-only<br/>threshold replay · zero API calls]
+```
+
+The mock ledger is the default everywhere; the real ledger is opt-in evidence and never merged into the mock tables.
+
+### Component architecture
+
+Layers only depend downward; the escalation decision lives in exactly one place (`router.py` + `engine.py`), so a fixed policy can never silently gain a routing rule.
+
+```mermaid
+flowchart TD
+    subgraph interfaces["Interfaces"]
+        gw[gateway.py<br/>FastAPI · /v1/chat/completions]
+        eval[replay.py · real_eval.py<br/>batch three-policy runs]
+        panel[web/ static panel<br/>bilingual · recomputes in browser]
+    end
+
+    subgraph orchestration["Orchestration"]
+        engine[engine.py<br/>attempts · escalation · cost · trace]
+        judge[judge.py / judge_ledger.py<br/>offline quality verdict + sweep]
+    end
+
+    subgraph decision["Routing decision"]
+        router[router.py<br/>rule prior + model confidence vs threshold]
+    end
+
+    subgraph adapters["Backend adapters"]
+        backends[backends.py<br/>MockBackend · OpenAICompatibleBackend<br/>logprobs confidence · max_tokens]
+    end
+
+    subgraph contracts["Contracts and math"]
+        schema[schema.py<br/>task · route_decision · model_response · cost_record]
+        pricing[pricing.py<br/>USD cost · CPST · retry premium]
+    end
+
+    subgraph config["Config (no secrets)"]
+        policycfg[policy.yaml<br/>threshold · max_attempts]
+        pricecfg[pricing.yaml · pricing.qwen.yaml<br/>illustrative · official Qwen]
+    end
+
+    gw --> engine
+    eval --> engine
+    engine --> router
+    engine --> backends
+    engine --> pricing
+    router --> policycfg
+    pricing --> pricecfg
+    engine --> schema
+    backends --> schema
+    replay_out[data/eval/mock_ledger.json] --> panel
+    eval --> replay_out
+    eval --> real_ledger[data/eval/real_ledger.json]
+    real_ledger --> judge
+    judge --> schema
+```
+
+Key invariants the diagram encodes:
+
+- **One decision point.** Only `router.py` + `engine.py` decide to escalate; the gateway, the replay and the real eval all call the same engine.
+- **Contracts before behaviour.** `schema.py` validates every `task`, `route_decision`, `model_response` and `cost_record`, so an invalid trace fails loudly instead of skewing a metric.
+- **Adapters are swappable.** `MockBackend` makes the whole pipeline offline and deterministic; `OpenAICompatibleBackend` adds logprobs confidence and an output budget for real backends.
+- **Evaluation is separate from serving.** The judge and the threshold sweep read a finished ledger and never touch the request path.
 
 ## Quick start (offline, no GPU, no API key)
 
@@ -66,9 +162,10 @@ uvicorn cascade.src.gateway:app --port 8000
 ```
 
 Override the default models with `CASCADE_SMALL_MODEL` / `CASCADE_FRONTIER_MODEL`
-(e.g. `qwen-plus`, `qwen3.8-max`), or call `bailian_backends()` from
-`cascade/src/backends.py` directly. Remember to plug current Qwen prices into
-`cascade/configs/pricing.yaml` before trusting real-run cost numbers.
+(e.g. `qwen-flash`, `qwen-max`), or call `bailian_backends()` from
+`cascade/src/backends.py` directly. Real-run costs must use a matching price card:
+`cascade/configs/pricing.qwen-flash.yaml` records official Bailian list prices for
+qwen-flash (input ≤128K tier) and qwen-max, converted at 7.2 CNY/USD.
 `DASHSCOPE_API_KEY` also works as the fallback key for both roles when using the
 full `CASCADE_*` configuration.
 
@@ -151,7 +248,7 @@ private/          local harness state and internal spec (gitignored, not publish
 |---|---|---|
 | M1 — ledger & routing pure functions | Verified | 100-task mock ledger, cost/CPST tests |
 | M2 — engine & service | Locally verified | Engine, fallback and gateway tested with in-process fake/mock backends |
-| F2.5 — real-backend eval | **Pilot (20 tasks, judged)** | qwen-plus → qwen-max, shared 1024-token budget: ~48% serving savings; judged CPST gap 3×. Directional, not a production conclusion |
+| F2.5 — real-backend eval | **Evaluated, model-dependent** | 50 stratified tasks, Bailian qwen-plus/qwen-flash → qwen-max, non-Qwen judge. qwen-plus loses 8.6% at baseline; a "≤120 words" instruction reaches a matched 80% success point **7.0% cheaper**. Officially priced qwen-flash lowers `S/F` to 0.050, but small-model success falls 44%→10% and avoidable share to 0.218; the only matched-80% point is full escalation at $0.019817, **5.0% more** than all-frontier. Larger-sample confirmation is still needed |
 | M3 — panel | Verified locally | Browser checks for policy switch, live recompute, i18n and online mode |
 | F3.5 — public deployment | Pending | `deploy.yml` is included; a live Pages URL needs repository/Pages permission |
 

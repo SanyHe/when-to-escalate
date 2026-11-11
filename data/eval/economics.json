@@ -1,0 +1,115 @@
+{
+  "_meta": {
+    "mode": "offline-economics",
+    "note": "OFFLINE ONLY: measured token counts and judged verdicts from the 50-task real run, re-priced under lever assumptions. No model was called. Prices: cascade/configs/pricing.qwen.yaml.",
+    "tasks": 50,
+    "pricing_file": "cascade/configs/pricing.qwen.yaml",
+    "ledger_file": "data/eval/real_ledger.json",
+    "judged_file": "data/eval/real_ledger_judged.json",
+    "prices": {
+      "small": {
+        "input": 0.111,
+        "output": 0.278
+      },
+      "frontier": {
+        "input": 0.333,
+        "output": 1.333
+      }
+    },
+    "levers": "completion_scale shrinks only small-model output tokens; price_factor scales the small model's whole price card."
+  },
+  "scenarios": {
+    "baseline (measured)": {
+      "small_total_usd": 0.007486,
+      "frontier_total_usd": 0.019143,
+      "cost_ratio": 0.3911,
+      "avoidable_share": 0.305,
+      "cascade_total_usd": 0.020791,
+      "cascade_savings": -0.0861,
+      "oracle_total_usd": 0.015005,
+      "oracle_savings": 0.2161,
+      "success_rate": 0.86,
+      "small_pass_rate": 0.28
+    },
+    "small answer x0.75": {
+      "small_total_usd": 0.005658,
+      "frontier_total_usd": 0.019143,
+      "cost_ratio": 0.2956,
+      "avoidable_share": 0.305,
+      "cascade_total_usd": 0.018963,
+      "cascade_savings": 0.0094,
+      "oracle_total_usd": 0.013177,
+      "oracle_savings": 0.3116,
+      "success_rate": 0.86,
+      "small_pass_rate": 0.28
+    },
+    "small answer x0.50": {
+      "small_total_usd": 0.00383,
+      "frontier_total_usd": 0.019143,
+      "cost_ratio": 0.2001,
+      "avoidable_share": 0.305,
+      "cascade_total_usd": 0.017135,
+      "cascade_savings": 0.1049,
+      "oracle_total_usd": 0.011349,
+      "oracle_savings": 0.4071,
+      "success_rate": 0.86,
+      "small_pass_rate": 0.28
+    },
+    "small price x0.50": {
+      "small_total_usd": 0.003743,
+      "frontier_total_usd": 0.019143,
+      "cost_ratio": 0.1955,
+      "avoidable_share": 0.305,
+      "cascade_total_usd": 0.017048,
+      "cascade_savings": 0.1094,
+      "oracle_total_usd": 0.011262,
+      "oracle_savings": 0.4117,
+      "success_rate": 0.86,
+      "small_pass_rate": 0.28
+    },
+    "small price x0.25": {
+      "small_total_usd": 0.001872,
+      "frontier_total_usd": 0.019143,
+      "cost_ratio": 0.0978,
+      "avoidable_share": 0.305,
+      "cascade_total_usd": 0.015177,
+      "cascade_savings": 0.2072,
+      "oracle_total_usd": 0.009391,
+      "oracle_savings": 0.5094,
+      "success_rate": 0.86,
+      "small_pass_rate": 0.28
+    },
+    "self-hosted small (x0.10)": {
+      "small_total_usd": 0.000749,
+      "frontier_total_usd": 0.019143,
+      "cost_ratio": 0.0391,
+      "avoidable_share": 0.305,
+      "cascade_total_usd": 0.014054,
+      "cascade_savings": 0.2659,
+      "oracle_total_usd": 0.008268,
+      "oracle_savings": 0.5681,
+      "success_rate": 0.86,
+      "small_pass_rate": 0.28
+    },
+    "brief x0.50 + price x0.50": {
+      "small_total_usd": 0.001915,
+      "frontier_total_usd": 0.019143,
+      "cost_ratio": 0.1,
+      "avoidable_share": 0.305,
+      "cascade_total_usd": 0.01522,
+      "cascade_savings": 0.2049,
+      "oracle_total_usd": 0.009434,
+      "oracle_savings": 0.5072,
+      "success_rate": 0.86,
+      "small_pass_rate": 0.28
+    }
+  },
+  "break_even": {
+    "rule": "cascade wins iff cost_ratio < avoidable_share",
+    "cost_ratio": 0.3911,
+    "required_ratio": 0.305,
+    "small_pass_rate": 0.28,
+    "max_savings_at_zero_small_cost": 0.305,
+    "note": "avoidable_share is the share of frontier spend on tasks the small model would have passed; it is both the break-even ratio and the savings ceiling. A free small model still cannot save more."
+  }
+}

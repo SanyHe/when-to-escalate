@@ -46,8 +46,11 @@ A feature is done when all of the following are true:
 | Verify web metrics | `node cascade/tests/verify_web_metrics.js` |
 | Regenerate seed tasks | `python3 cascade/src/gen_tasks.py` |
 | Build the three-policy mock ledger | `python3 cascade/src/replay.py` |
-| Run the real three-policy eval | `python3 cascade/src/real_eval.py --limit 5 --pricing cascade/configs/pricing.qwen.yaml` |
-| Judge a real ledger offline | `python3 cascade/src/judge_ledger.py --ledger data/eval/real_ledger.json` |
+| Run the real three-policy eval | `python3 cascade/src/real_eval.py --limit 50 --max-tokens 1024 --threshold 0.85 --small-model qwen-plus --frontier-model qwen-max --pricing cascade/configs/pricing.qwen.yaml` |
+| Judge a real ledger offline | `CASCADE_JUDGE_MODEL=<judge-model> CASCADE_JUDGE_LABEL=external-non-qwen-judge python3 cascade/src/judge_ledger.py --ledger data/eval/real_ledger.json` |
+| Rebuild the threshold sweep only (no API calls) | `python3 cascade/src/judge_ledger.py --ledger data/eval/real_ledger_judged.json --sweep-only` |
+| Learned-router ceiling check (no API calls) | `python3 cascade/src/router_ceiling.py` |
+| Break-even inequality + lever scenarios (no API calls) | `python3 cascade/src/economics.py` |
 | Serve the gateway (needs backends) | `uvicorn cascade.src.gateway:app --port 8000` |
 | Preview the static panel | `python3 -m http.server 8765 --directory web` |
 

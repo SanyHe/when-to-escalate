@@ -1,0 +1,24 @@
+# pricing.qwen-flash.yaml — Official Bailian prices for the cheap-small-model run.
+#
+# Source (checked 2026-11-11), Beijing region, standard real-time calls:
+#   https://help.aliyun.com/zh/model-studio/qwen-flash
+#   https://help.aliyun.com/zh/model-studio/model-pricing
+#   qwen-flash: CNY 0.15 / 1.5 per 1M input / output tokens (input <= 128K tier;
+#               the 50-task run's maximum request prompt was 68 tokens, so the
+#               first tier applies to every call)
+#   qwen-max:   CNY 2.4 / 9.6 per 1M input / output tokens (no tiering)
+# Converted with an assumed FX rate of 7.2 CNY per USD. Update the FX rate
+# before quoting absolute USD costs; the cost *ratio* between the two models
+# is independent of the FX assumption. Cache-hit, Batch and free-quota discounts
+# are NOT modelled: these are the undiscounted list prices.
+currency: USD
+unit: per_million_tokens
+fx_cny_per_usd: 7.2
+
+models:
+  small:
+    input: 0.0208
+    output: 0.2083
+  frontier:
+    input: 0.333
+    output: 1.333

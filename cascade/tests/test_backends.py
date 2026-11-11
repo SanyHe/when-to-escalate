@@ -357,3 +357,26 @@ def test_bailian_backends_requires_key(monkeypatch):
 
     with pytest.raises(RuntimeError, match="DASHSCOPE_API_KEY"):
         bailian_backends()
+
+
+def test_system_prompt_is_sent_only_when_configured():
+    captured = {}
+
+    def handler(request):
+        captured["payload"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "choices": [{"message": {"content": "ok"}}],
+                "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+            },
+        )
+
+    make_backend(handler).complete(TASK)
+    assert [m["role"] for m in captured["payload"]["messages"]] == ["user"]
+
+    brevity = "Answer in at most 120 words. Do not restate the question."
+    make_backend(handler, system_prompt=brevity).complete(TASK)
+    messages = captured["payload"]["messages"]
+    assert [m["role"] for m in messages] == ["system", "user"]
+    assert messages[0]["content"] == brevity
