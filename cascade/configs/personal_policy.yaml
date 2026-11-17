@@ -1,0 +1,126 @@
+# personal_policy.yaml — Decision buckets and hard constraints for an
+# always-on personal agent.
+#
+# Design notes:
+#   - A bucket is resolved per decision point, not per session.
+#   - Consequence outranks difficulty. When the consequence classifier is
+#     unsure, the decision moves to a more conservative bucket.
+#   - Hard constraints run before any cost optimisation and never enter the
+#     quality-routing path.
+#
+# Every number below is a starting default to tune from telemetry, not a
+# measured value.
+
+version: 1
+
+# A consequence classifier below this confidence steps the decision up one
+# bucket: read -> suggest -> reversible write -> irreversible write.
+consequence_confidence_floor: 0.80
+
+routing:
+  # Only these buckets may escalate from the small to the frontier model.
+  # Every other bucket keeps a fixed model so cost and risk stay predictable.
+  enabled_buckets:
+    - B2_draft
+    - B3_act_reversible
+
+  # A bucket is promoted to quality routing only when all checks pass.
+  promotion:
+    min_decisions: 300
+    min_verifier_coverage: 0.90
+    min_small_accept_rate: 0.80
+    min_cost_reduction: 0.10
+    max_error_rate_ratio: 1.20
+
+hard_constraints:
+  local_only:
+    # Data never leaves the device: use the local model and never escalate.
+    model: local
+    allow_escalation: false
+    if_local_unavailable: queue
+
+  user_absent_irreversible:
+    # An irreversible action while the user is away waits for confirmation.
+    action: queue_for_confirmation
+
+  degraded_device:
+    # Low battery or weak network: defer paid work instead of running it now.
+    triggers:
+      - low_battery
+      - weak_network
+    action: defer_to_background
+
+  budget_exhausted:
+    # Keep cheap, non-destructive work; queue everything else.
+    allowed_buckets:
+      - B0_sense
+      - B1_read
+      - B2_draft
+    action: defer_others
+
+buckets:
+  B0_sense:
+    description: Sensing and filtering without an LLM call.
+    model: none
+    confirmation: none
+    verifier: rule
+    escalate: false
+    max_tokens: 0
+    latency_slo_ms: 200
+    batch: false
+    retry: 0
+
+  B1_read:
+    description: Interactive read-only answer.
+    model: small
+    confirmation: none
+    verifier: none
+    escalate: false
+    max_tokens: 400
+    latency_slo_ms: 2000
+    batch: false
+    retry: 0
+
+  B2_draft:
+    description: Interactive suggestion or draft the user can inspect.
+    model: small
+    confirmation: inline
+    verifier: schema
+    escalate: on_failure
+    max_tokens: 800
+    latency_slo_ms: 3000
+    batch: false
+    retry: 0
+
+  B3_act_reversible:
+    description: Reversible write such as a reminder, tag or local state change.
+    model: small
+    confirmation: after_the_fact
+    verifier: tool_result
+    escalate: on_failure
+    max_tokens: 800
+    latency_slo_ms: 5000
+    batch: false
+    retry: 1
+
+  B4_act_irreversible:
+    description: Irreversible write such as sending, paying or deleting.
+    model: frontier
+    confirmation: required
+    verifier: human
+    escalate: false
+    max_tokens: 1200
+    latency_slo_ms: 10000
+    batch: false
+    retry: 0
+
+  B5_background:
+    description: Background, low-consequence digest or archive work.
+    model: small
+    confirmation: none
+    verifier: sample
+    escalate: false
+    max_tokens: 600
+    latency_slo_ms: 60000
+    batch: true
+    retry: 0
