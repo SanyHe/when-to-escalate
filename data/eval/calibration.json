@@ -1,0 +1,570 @@
+{
+  "_meta": {
+    "mode": "OFFLINE",
+    "note": "Reuses recorded small-model answers, confidences and judged verdicts. No model was called. Each ledger has 50 tasks, so bin-level estimates and differences under ~5pp are noisy.",
+    "sources": [
+      "data/eval/real_ledger_judged.json",
+      "data/eval/real_ledger_brief_judged.json",
+      "data/eval/real_ledger_flash_judged.json"
+    ],
+    "bins": 10
+  },
+  "reports": {
+    "qwen-plus-baseline": {
+      "ledger": "data/eval/real_ledger_judged.json",
+      "tasks": 50,
+      "scored": 50,
+      "excluded_judge_failed": 0,
+      "accuracy": 0.28,
+      "mean_confidence": 0.8679620000000002,
+      "mean_confidence_correct": 0.8875357142857142,
+      "mean_confidence_wrong": 0.8603499999999998,
+      "ece": 0.5879619999999999,
+      "brier": 0.5377845274,
+      "auc": 0.7043650793650794,
+      "bins": [
+        {
+          "low": 0.0,
+          "high": 0.1,
+          "n": 0
+        },
+        {
+          "low": 0.1,
+          "high": 0.2,
+          "n": 0
+        },
+        {
+          "low": 0.2,
+          "high": 0.3,
+          "n": 0
+        },
+        {
+          "low": 0.3,
+          "high": 0.4,
+          "n": 0
+        },
+        {
+          "low": 0.4,
+          "high": 0.5,
+          "n": 0
+        },
+        {
+          "low": 0.5,
+          "high": 0.6,
+          "n": 0
+        },
+        {
+          "low": 0.6,
+          "high": 0.7,
+          "n": 0
+        },
+        {
+          "low": 0.7,
+          "high": 0.8,
+          "n": 0
+        },
+        {
+          "low": 0.8,
+          "high": 0.9,
+          "n": 37,
+          "mean_confidence": 0.8496945945945943,
+          "accuracy": 0.1891891891891892,
+          "gap": -0.6605054054054051
+        },
+        {
+          "low": 0.9,
+          "high": 1.0,
+          "n": 13,
+          "mean_confidence": 0.9199538461538462,
+          "accuracy": 0.5384615384615384,
+          "gap": -0.3814923076923078
+        }
+      ],
+      "confusion": {
+        "0.60": {
+          "threshold": 0.6,
+          "escalated": 0,
+          "escalation_rate": 0.0,
+          "caught_wrong": 0,
+          "wasted_on_correct": 0,
+          "kept_wrong": 36,
+          "kept_correct": 14
+        },
+        "0.70": {
+          "threshold": 0.7,
+          "escalated": 0,
+          "escalation_rate": 0.0,
+          "caught_wrong": 0,
+          "wasted_on_correct": 0,
+          "kept_wrong": 36,
+          "kept_correct": 14
+        },
+        "0.80": {
+          "threshold": 0.8,
+          "escalated": 0,
+          "escalation_rate": 0.0,
+          "caught_wrong": 0,
+          "wasted_on_correct": 0,
+          "kept_wrong": 36,
+          "kept_correct": 14
+        },
+        "0.85": {
+          "threshold": 0.85,
+          "escalated": 17,
+          "escalation_rate": 0.34,
+          "caught_wrong": 15,
+          "wasted_on_correct": 2,
+          "kept_wrong": 21,
+          "kept_correct": 12
+        },
+        "0.90": {
+          "threshold": 0.9,
+          "escalated": 37,
+          "escalation_rate": 0.74,
+          "caught_wrong": 30,
+          "wasted_on_correct": 7,
+          "kept_wrong": 6,
+          "kept_correct": 7
+        },
+        "0.95": {
+          "threshold": 0.95,
+          "escalated": 49,
+          "escalation_rate": 0.98,
+          "caught_wrong": 35,
+          "wasted_on_correct": 14,
+          "kept_wrong": 1,
+          "kept_correct": 0
+        },
+        "1.00": {
+          "threshold": 1.0,
+          "escalated": 50,
+          "escalation_rate": 1.0,
+          "caught_wrong": 36,
+          "wasted_on_correct": 14,
+          "kept_wrong": 0,
+          "kept_correct": 0
+        }
+      },
+      "frontier": [
+        {
+          "threshold": 0.6,
+          "escalation_rate": 0.0,
+          "judged_success": 0.28,
+          "total_cost_usd": 0.007486,
+          "cpst_usd": 0.000126
+        },
+        {
+          "threshold": 0.7,
+          "escalation_rate": 0.0,
+          "judged_success": 0.28,
+          "total_cost_usd": 0.007486,
+          "cpst_usd": 0.000126
+        },
+        {
+          "threshold": 0.8,
+          "escalation_rate": 0.0,
+          "judged_success": 0.28,
+          "total_cost_usd": 0.007486,
+          "cpst_usd": 0.000126
+        },
+        {
+          "threshold": 0.85,
+          "escalation_rate": 0.34,
+          "judged_success": 0.5,
+          "total_cost_usd": 0.01595,
+          "cpst_usd": 0.000351
+        },
+        {
+          "threshold": 0.9,
+          "escalation_rate": 0.74,
+          "judged_success": 0.72,
+          "total_cost_usd": 0.023331,
+          "cpst_usd": 0.000407
+        },
+        {
+          "threshold": 0.95,
+          "escalation_rate": 0.98,
+          "judged_success": 0.78,
+          "total_cost_usd": 0.025682,
+          "cpst_usd": 0.000382
+        }
+      ]
+    },
+    "qwen-plus-brief": {
+      "ledger": "data/eval/real_ledger_brief_judged.json",
+      "tasks": 50,
+      "scored": 50,
+      "excluded_judge_failed": 0,
+      "accuracy": 0.44,
+      "mean_confidence": 0.8570620000000001,
+      "mean_confidence_correct": 0.8833681818181817,
+      "mean_confidence_wrong": 0.8363928571428572,
+      "ece": 0.41706199999999993,
+      "brier": 0.40078002980000016,
+      "auc": 0.6931818181818182,
+      "bins": [
+        {
+          "low": 0.0,
+          "high": 0.1,
+          "n": 0
+        },
+        {
+          "low": 0.1,
+          "high": 0.2,
+          "n": 0
+        },
+        {
+          "low": 0.2,
+          "high": 0.3,
+          "n": 0
+        },
+        {
+          "low": 0.3,
+          "high": 0.4,
+          "n": 0
+        },
+        {
+          "low": 0.4,
+          "high": 0.5,
+          "n": 0
+        },
+        {
+          "low": 0.5,
+          "high": 0.6,
+          "n": 0
+        },
+        {
+          "low": 0.6,
+          "high": 0.7,
+          "n": 1,
+          "mean_confidence": 0.6652,
+          "accuracy": 0.0,
+          "gap": -0.6652
+        },
+        {
+          "low": 0.7,
+          "high": 0.8,
+          "n": 4,
+          "mean_confidence": 0.7248,
+          "accuracy": 0.0,
+          "gap": -0.7248
+        },
+        {
+          "low": 0.8,
+          "high": 0.9,
+          "n": 36,
+          "mean_confidence": 0.8598583333333333,
+          "accuracy": 0.4166666666666667,
+          "gap": -0.4431916666666666
+        },
+        {
+          "low": 0.9,
+          "high": 1.0,
+          "n": 9,
+          "mean_confidence": 0.9259777777777778,
+          "accuracy": 0.7777777777777778,
+          "gap": -0.1482
+        }
+      ],
+      "confusion": {
+        "0.60": {
+          "threshold": 0.6,
+          "escalated": 0,
+          "escalation_rate": 0.0,
+          "caught_wrong": 0,
+          "wasted_on_correct": 0,
+          "kept_wrong": 28,
+          "kept_correct": 22
+        },
+        "0.70": {
+          "threshold": 0.7,
+          "escalated": 1,
+          "escalation_rate": 0.02,
+          "caught_wrong": 1,
+          "wasted_on_correct": 0,
+          "kept_wrong": 27,
+          "kept_correct": 22
+        },
+        "0.80": {
+          "threshold": 0.8,
+          "escalated": 5,
+          "escalation_rate": 0.1,
+          "caught_wrong": 5,
+          "wasted_on_correct": 0,
+          "kept_wrong": 23,
+          "kept_correct": 22
+        },
+        "0.85": {
+          "threshold": 0.85,
+          "escalated": 16,
+          "escalation_rate": 0.32,
+          "caught_wrong": 12,
+          "wasted_on_correct": 4,
+          "kept_wrong": 16,
+          "kept_correct": 18
+        },
+        "0.90": {
+          "threshold": 0.9,
+          "escalated": 41,
+          "escalation_rate": 0.82,
+          "caught_wrong": 26,
+          "wasted_on_correct": 15,
+          "kept_wrong": 2,
+          "kept_correct": 7
+        },
+        "0.95": {
+          "threshold": 0.95,
+          "escalated": 48,
+          "escalation_rate": 0.96,
+          "caught_wrong": 28,
+          "wasted_on_correct": 20,
+          "kept_wrong": 0,
+          "kept_correct": 2
+        },
+        "1.00": {
+          "threshold": 1.0,
+          "escalated": 50,
+          "escalation_rate": 1.0,
+          "caught_wrong": 28,
+          "wasted_on_correct": 22,
+          "kept_wrong": 0,
+          "kept_correct": 0
+        }
+      },
+      "frontier": [
+        {
+          "threshold": 0.6,
+          "escalation_rate": 0.0,
+          "judged_success": 0.44,
+          "total_cost_usd": 0.001768,
+          "cpst_usd": 3.9e-05
+        },
+        {
+          "threshold": 0.7,
+          "escalation_rate": 0.02,
+          "judged_success": 0.46,
+          "total_cost_usd": 0.001796,
+          "cpst_usd": 3.9e-05
+        },
+        {
+          "threshold": 0.8,
+          "escalation_rate": 0.1,
+          "judged_success": 0.54,
+          "total_cost_usd": 0.001908,
+          "cpst_usd": 3.9e-05
+        },
+        {
+          "threshold": 0.85,
+          "escalation_rate": 0.32,
+          "judged_success": 0.66,
+          "total_cost_usd": 0.007126,
+          "cpst_usd": 0.000171
+        },
+        {
+          "threshold": 0.9,
+          "escalation_rate": 0.82,
+          "judged_success": 0.8,
+          "total_cost_usd": 0.018454,
+          "cpst_usd": 0.000286
+        },
+        {
+          "threshold": 0.95,
+          "escalation_rate": 0.96,
+          "judged_success": 0.8,
+          "total_cost_usd": 0.020616,
+          "cpst_usd": 0.000299
+        }
+      ]
+    },
+    "qwen-flash": {
+      "ledger": "data/eval/real_ledger_flash_judged.json",
+      "tasks": 50,
+      "scored": 50,
+      "excluded_judge_failed": 0,
+      "accuracy": 0.1,
+      "mean_confidence": 0.8540139999999997,
+      "mean_confidence_correct": 0.8125,
+      "mean_confidence_wrong": 0.8586266666666664,
+      "ece": 0.754014,
+      "brier": 0.6695811993999999,
+      "auc": 0.2577777777777778,
+      "bins": [
+        {
+          "low": 0.0,
+          "high": 0.1,
+          "n": 0
+        },
+        {
+          "low": 0.1,
+          "high": 0.2,
+          "n": 0
+        },
+        {
+          "low": 0.2,
+          "high": 0.3,
+          "n": 0
+        },
+        {
+          "low": 0.3,
+          "high": 0.4,
+          "n": 0
+        },
+        {
+          "low": 0.4,
+          "high": 0.5,
+          "n": 0
+        },
+        {
+          "low": 0.5,
+          "high": 0.6,
+          "n": 0
+        },
+        {
+          "low": 0.6,
+          "high": 0.7,
+          "n": 0
+        },
+        {
+          "low": 0.7,
+          "high": 0.8,
+          "n": 8,
+          "mean_confidence": 0.7796750000000001,
+          "accuracy": 0.25,
+          "gap": -0.5296750000000001
+        },
+        {
+          "low": 0.8,
+          "high": 0.9,
+          "n": 31,
+          "mean_confidence": 0.844616129032258,
+          "accuracy": 0.0967741935483871,
+          "gap": -0.7478419354838709
+        },
+        {
+          "low": 0.9,
+          "high": 1.0,
+          "n": 11,
+          "mean_confidence": 0.9345636363636364,
+          "accuracy": 0.0,
+          "gap": -0.9345636363636364
+        }
+      ],
+      "confusion": {
+        "0.60": {
+          "threshold": 0.6,
+          "escalated": 0,
+          "escalation_rate": 0.0,
+          "caught_wrong": 0,
+          "wasted_on_correct": 0,
+          "kept_wrong": 45,
+          "kept_correct": 5
+        },
+        "0.70": {
+          "threshold": 0.7,
+          "escalated": 0,
+          "escalation_rate": 0.0,
+          "caught_wrong": 0,
+          "wasted_on_correct": 0,
+          "kept_wrong": 45,
+          "kept_correct": 5
+        },
+        "0.80": {
+          "threshold": 0.8,
+          "escalated": 8,
+          "escalation_rate": 0.16,
+          "caught_wrong": 6,
+          "wasted_on_correct": 2,
+          "kept_wrong": 39,
+          "kept_correct": 3
+        },
+        "0.85": {
+          "threshold": 0.85,
+          "escalated": 26,
+          "escalation_rate": 0.52,
+          "caught_wrong": 22,
+          "wasted_on_correct": 4,
+          "kept_wrong": 23,
+          "kept_correct": 1
+        },
+        "0.90": {
+          "threshold": 0.9,
+          "escalated": 39,
+          "escalation_rate": 0.78,
+          "caught_wrong": 34,
+          "wasted_on_correct": 5,
+          "kept_wrong": 11,
+          "kept_correct": 0
+        },
+        "0.95": {
+          "threshold": 0.95,
+          "escalated": 49,
+          "escalation_rate": 0.98,
+          "caught_wrong": 44,
+          "wasted_on_correct": 5,
+          "kept_wrong": 1,
+          "kept_correct": 0
+        },
+        "1.00": {
+          "threshold": 1.0,
+          "escalated": 50,
+          "escalation_rate": 1.0,
+          "caught_wrong": 45,
+          "wasted_on_correct": 5,
+          "kept_wrong": 0,
+          "kept_correct": 0
+        }
+      },
+      "frontier": [
+        {
+          "threshold": 0.6,
+          "escalation_rate": 0.0,
+          "judged_success": 0.1,
+          "total_cost_usd": 0.000951,
+          "cpst_usd": 3.1e-05
+        },
+        {
+          "threshold": 0.7,
+          "escalation_rate": 0.0,
+          "judged_success": 0.1,
+          "total_cost_usd": 0.000951,
+          "cpst_usd": 3.1e-05
+        },
+        {
+          "threshold": 0.8,
+          "escalation_rate": 0.16,
+          "judged_success": 0.16,
+          "total_cost_usd": 0.005179,
+          "cpst_usd": 0.000261
+        },
+        {
+          "threshold": 0.85,
+          "escalation_rate": 0.52,
+          "judged_success": 0.44,
+          "total_cost_usd": 0.012203,
+          "cpst_usd": 0.000342
+        },
+        {
+          "threshold": 0.9,
+          "escalation_rate": 0.78,
+          "judged_success": 0.64,
+          "total_cost_usd": 0.0164,
+          "cpst_usd": 0.000307
+        },
+        {
+          "threshold": 0.95,
+          "escalation_rate": 0.98,
+          "judged_success": 0.78,
+          "total_cost_usd": 0.019729,
+          "cpst_usd": 0.000274
+        },
+        {
+          "threshold": 1.0,
+          "escalation_rate": 1.0,
+          "judged_success": 0.8,
+          "total_cost_usd": 0.019817,
+          "cpst_usd": 0.00027
+        }
+      ]
+    }
+  }
+}
