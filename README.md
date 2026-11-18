@@ -33,7 +33,7 @@ Offline evaluation path — mock first, real backends optional, judge separate:
 
 ```mermaid
 flowchart TD
-    gen[gen_tasks.py<br/>fixed seed] --> seeds[data/synthetic/seed_tasks.jsonl<br/>100 tasks · 50/30/20]
+    gen[gen_tasks.py<br/>fixed seed] --> seeds[data/synthetic/seed_tasks.jsonl<br/>100 tasks · 20/50/30 classes]
     seeds --> replay[replay.py<br/>deterministic mock backends]
     replay --> mock[data/eval/mock_ledger.json<br/>3 policies · CPST · savings]
     replay --> webdata[web/data/ledger.json]
@@ -248,7 +248,7 @@ private/          local harness state and internal spec (gitignored, not publish
 |---|---|---|
 | M1 — ledger & routing pure functions | Verified | 100-task mock ledger, cost/CPST tests |
 | M2 — engine & service | Locally verified | Engine, fallback and gateway tested with in-process fake/mock backends |
-| F2.5 — real-backend eval | **Evaluated, model-dependent** | 50 stratified tasks, Bailian qwen-plus/qwen-flash → qwen-max, non-Qwen judge. qwen-plus loses 8.6% at baseline; a "≤120 words" instruction reaches a matched 80% success point **7.0% cheaper**. Officially priced qwen-flash lowers `S/F` to 0.050, but small-model success falls 44%→10% and avoidable share to 0.218; the only matched-80% point is full escalation at $0.019817, **5.0% more** than all-frontier. Larger-sample confirmation is still needed |
+| F2.5 — real-backend eval | **Verifier-first evaluated; still below frontier** | On 50 stratified tasks (10 refusal / 25 small-sufficient / 15 frontier-required), the live verifier-first qwen-plus → qwen-max cascade passes 43/50 (86%), above same-round all-small at 80% but below all-frontier at 96%. Total cost is $0.005587 vs $0.015675 (64.4% lower) and serving CPST is 70% lower, but this is not a matched-success saving. Verifiable-task decisions reproduced the offline replay; the remaining gap comes from five high-confidence errors on unverifiable frontier-required tasks, and two of eight escalations still failed. F2.5 stays in progress; see `docs/en/03-eval.md` §8.14. |
 | M3 — panel | Verified locally | Browser checks for policy switch, live recompute, i18n and online mode |
 | F3.5 — public deployment | Pending | `deploy.yml` is included; a live Pages URL needs repository/Pages permission |
 

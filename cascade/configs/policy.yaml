@@ -5,6 +5,13 @@
 # difficulty band; a real deployment should replace them with measured
 # confidence from the small model (e.g. logprob margin or self-consistency).
 
+# cascade escalation mode: "confidence" (default, rule or model-reported mean
+# token probability) or "verifier_first" (accept on deterministic-verifier pass,
+# escalate on deterministic-verifier failure, fall back to confidence when the
+# task has no verifier). The mock ledger stays on "confidence" so existing
+# numbers do not move; real evaluation switches this flag at runtime.
+escalation_mode: confidence
+
 confidence_threshold: 0.66
 
 # Base confidence of the small model by expected difficulty. This is the
@@ -22,9 +29,25 @@ max_attempts:
   all_small: 2
   cascade: 1
 
-# Synthetic task flow composition (F1.5). simple + medium are the bulk;
-# complex is the ~20% tail. Values are counts, not probabilities.
-task_mix:
-  simple: 50
-  medium: 30
-  complex: 20
+# Synthetic task flow composition (F1.5 / F2.5). The distribution is driven
+# by task_class because that is what determines whether escalation can ever
+# help: should_refuse tasks must not be "solved" by inventing input,
+# small_sufficient tasks are cheap wins, frontier_required tasks need the
+# frontier model.
+task_class_mix:
+  should_refuse: 20
+  small_sufficient: 50
+  frontier_required: 30
+
+# Kind (difficulty) weights inside each class. They are scaled to the class
+# total; at 100 tasks this keeps the overall kind mix at 50/30/20.
+task_class_kind_mix:
+  should_refuse:
+    simple: 1
+    medium: 1
+  small_sufficient:
+    simple: 4
+    medium: 1
+  frontier_required:
+    medium: 1
+    complex: 2

@@ -171,6 +171,8 @@ def summarize_judged(records: list[Dict[str, Any]]) -> Dict[str, Any]:
     judged = [record for record in records if not record.get("judge_failed")]
     passed = [record for record in judged if record["passed"]]
     failed = [record for record in judged if not record["passed"]]
+    by_verifier = sum(1 for record in judged
+                      if record.get("judged_by") == "verifier")
     pass_cost = sum(record["cost_usd"] for record in passed)
     judge_cost = sum(record.get("judge_cost_usd", 0.0) for record in records)
     pass_count = len(passed)
@@ -179,6 +181,8 @@ def summarize_judged(records: list[Dict[str, Any]]) -> Dict[str, Any]:
         "tasks": tasks,
         "judged": judged_count,
         "judge_failures": len(judge_failures),
+        "verified_by_verifier": by_verifier,
+        "judged_by_llm": judged_count - by_verifier,
         "passed": pass_count,
         "failed": len(failed),
         "success_rate": (pass_count / judged_count) if judged_count else 0.0,

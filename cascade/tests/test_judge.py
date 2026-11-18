@@ -1,7 +1,16 @@
 import pytest
 
 from judge import build_judge_backend, judge_answer, parse_verdict, summarize_judged
-from judge_ledger import DEFAULT_LEDGER, DEFAULT_OUT, final_answer, resolve_sweep_outputs, sweep_thresholds
+from judge_ledger import (
+    DEFAULT_LEDGER,
+    DEFAULT_OUT,
+    final_answer,
+    judged_records_for_policy,
+    regrade_verifier_records,
+    resolve_sweep_outputs,
+    sweep_thresholds,
+)
+from pricing import load_pricing
 
 
 def test_parse_verdict_accepts_plain_and_fenced_json():
@@ -199,6 +208,113 @@ def test_final_answer_falls_back_to_last_attempt():
 
     assert final_answer(trace) == "last"
     assert final_answer({"responses": []}) == ""
+
+
+def _traces_with_answers(answers):
+    return [
+        {
+            "task_id": task_id,
+            "responses": [{"success": True, "content": answer}],
+            "cost_record": {"cost_usd": 0.001},
+        }
+        for task_id, answer in answers.items()
+    ]
+
+
+def test_judged_records_prefer_the_deterministic_verifier():
+    class ExplodingBackend:
+        def complete(self, task, attempt=1):
+            raise AssertionError("the judge must not be called")
+
+    tasks = {
+        "t1": {
+            "task_id": "t1", "prompt": "128 times 24?",
+            "verification": {"type": "exact_match", "expected": "3072"},
+        },
+    }
+    traces = _traces_with_answers({"t1": "3072"})
+
+    records = judged_records_for_policy(
+        traces, tasks, ExplodingBackend(), load_pricing(), sleep_s=0,
+    )
+
+    assert records[0]["passed"] is True
+    assert records[0]["judged_by"] == "verifier"
+    assert records[0]["judge_cost_usd"] == 0.0
+
+
+def test_judged_records_fall_back_to_the_llm_judge():
+    class StubBackend:
+        def complete(self, task, attempt=1):
+            return {
+                "success": True,
+                "content": '{"pass": true, "reason": "solved"}',
+                "usage": {"prompt_tokens": 10, "completion_tokens": 5},
+            }
+
+    tasks = {
+        "t1": {
+            "task_id": "t1", "prompt": "design a system",
+            "verification": {"type": "llm_judge"},
+        },
+    }
+    traces = _traces_with_answers({"t1": "a design"})
+
+    records = judged_records_for_policy(
+        traces, tasks, StubBackend(), load_pricing(), sleep_s=0,
+    )
+
+    assert records[0]["passed"] is True
+    assert records[0]["judged_by"] == "llm"
+    assert records[0]["judge_cost_usd"] > 0
+
+
+def test_summarize_judged_counts_graders():
+    records = [
+        {"cost_usd": 1.0, "passed": True, "judged_by": "verifier"},
+        {"cost_usd": 1.0, "passed": False, "judged_by": "llm",
+         "judge_cost_usd": 0.5},
+    ]
+
+    summary = summarize_judged(records)
+
+    assert summary["verified_by_verifier"] == 1
+    assert summary["judged_by_llm"] == 1
+
+
+def test_regrade_refreshes_verifier_verdicts_but_keeps_llm_verdicts():
+    ledger = {
+        "traces": {
+            "cascade": [
+                {"task_id": "t1", "responses": [
+                    {"success": True, "content": "需要看到具体内容，您能否提供？"}
+                ]},
+            ],
+        },
+    }
+    records = {
+        "cascade": [
+            {"task_id": "t1", "passed": False, "reason": "stale",
+             "judge_failed": False, "judged_by": "verifier",
+             "verification_type": "refusal", "cost_usd": 0.0,
+             "judge_cost_usd": 0.0},
+            {"task_id": "t2", "passed": True, "reason": "llm kept",
+             "judge_failed": False, "judged_by": "llm",
+             "verification_type": "llm_judge", "cost_usd": 0.0,
+             "judge_cost_usd": 0.0},
+        ],
+    }
+    tasks = {"t1": {"task_id": "t1", "verification": {
+        "type": "refusal", "missing_inputs": ["技术方案"],
+        "forbidden_patterns": [r"\d+(?:\.\d+)?\s*%"],
+    }}}
+
+    regraded = regrade_verifier_records(ledger, records, tasks)
+
+    assert regraded["cascade"][0]["passed"] is True
+    assert regraded["cascade"][0]["judged_by"] == "verifier"
+    assert regraded["cascade"][1]["reason"] == "llm kept"
+    assert regraded["cascade"][1]["judged_by"] == "llm"
 
 
 def _sweep_fixture():

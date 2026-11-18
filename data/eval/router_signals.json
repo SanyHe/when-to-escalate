@@ -1,0 +1,4479 @@
+{
+  "_meta": {
+    "mode": "offline-routing-signals"
+  },
+  "runs": {
+    "plus": {
+      "_meta": {
+        "run": "plus",
+        "tasks": 50,
+        "class_counts": {
+          "should_refuse": 10,
+          "small_sufficient": 25,
+          "frontier_required": 15
+        },
+        "confidence_threshold_used": 0.85,
+        "caveats": [
+          "Recorded 50-task sample per model; one task moves 2pp of success.",
+          "exact_match/field_match verifiers use gold expectations: verifier_gate is an upper bound for shipping cheap checkers.",
+          "class_oracle reads task_class metadata unavailable in production.",
+          "keyword_router is 5-fold out-of-fold on 50 tasks (15 positives).",
+          "Costs are serving costs from the recorded ledger; judging is offline."
+        ]
+      },
+      "baselines": {
+        "all_frontier": {
+          "success_rate": 0.9,
+          "passed": 45,
+          "tasks": 50,
+          "total_cost_usd": 0.015219,
+          "cpst_usd": 0.00027908,
+          "escalation_rate": 0.0,
+          "frontier_rate": 1.0,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 7,
+              "cost_usd": 0.0029162
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 25,
+              "cost_usd": 0.00057332
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 13,
+              "cost_usd": 0.01172948
+            }
+          }
+        },
+        "all_small": {
+          "success_rate": 0.82,
+          "passed": 41,
+          "tasks": 50,
+          "total_cost_usd": 0.00146058,
+          "cpst_usd": 2.41e-05,
+          "escalation_rate": 0.0,
+          "frontier_rate": 0.0,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 5,
+              "cost_usd": 0.00030519
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 25,
+              "cost_usd": 0.00019913
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 11,
+              "cost_usd": 0.00095626
+            }
+          }
+        },
+        "oracle": {
+          "success_rate": 0.96,
+          "passed": 48,
+          "tasks": 50,
+          "total_cost_usd": 0.0057761,
+          "cpst_usd": 0.00011891,
+          "escalation_rate": 0.0,
+          "frontier_rate": 0.14,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 8,
+              "cost_usd": 0.00163752
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 25,
+              "cost_usd": 0.00019913
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 15,
+              "cost_usd": 0.00393945
+            }
+          }
+        }
+      },
+      "fixed_threshold": {
+        "confidence": {
+          "success_rate": 0.9,
+          "passed": 45,
+          "tasks": 50,
+          "total_cost_usd": 0.00603069,
+          "cpst_usd": 0.00012712,
+          "escalation_rate": 0.14,
+          "frontier_rate": 0.14,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 6,
+              "cost_usd": 0.00184878
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 25,
+              "cost_usd": 0.00019913
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 14,
+              "cost_usd": 0.00398278
+            }
+          }
+        },
+        "verifier_gate": {
+          "success_rate": 0.94,
+          "passed": 47,
+          "tasks": 50,
+          "total_cost_usd": 0.00676016,
+          "cpst_usd": 0.00012351,
+          "escalation_rate": 0.18,
+          "frontier_rate": 0.18,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 8,
+              "cost_usd": 0.00257825
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 25,
+              "cost_usd": 0.00019913
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 14,
+              "cost_usd": 0.00398278
+            }
+          }
+        },
+        "refusal_gate": {
+          "success_rate": 0.94,
+          "passed": 47,
+          "tasks": 50,
+          "total_cost_usd": 0.00676016,
+          "cpst_usd": 0.00012351,
+          "escalation_rate": 0.18,
+          "frontier_rate": 0.18,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 8,
+              "cost_usd": 0.00257825
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 25,
+              "cost_usd": 0.00019913
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 14,
+              "cost_usd": 0.00398278
+            }
+          }
+        }
+      },
+      "signals": {
+        "confidence": {
+          "signal": "mean token probability",
+          "best_at_matched_success": {
+            "success_rate": 0.9,
+            "passed": 45,
+            "tasks": 50,
+            "total_cost_usd": 0.00603069,
+            "cpst_usd": 0.00012712,
+            "escalation_rate": 0.14,
+            "frontier_rate": 0.14,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 6,
+                "cost_usd": 0.00184878
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 0.00019913
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 14,
+                "cost_usd": 0.00398278
+              }
+            },
+            "parameter": 0.85
+          },
+          "curve": [
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.00305182,
+              "cpst_usd": 6.31e-05,
+              "escalation_rate": 0.04,
+              "frontier_rate": 0.04,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.5
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.00305182,
+              "cpst_usd": 6.31e-05,
+              "escalation_rate": 0.04,
+              "frontier_rate": 0.04,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.55
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.00305182,
+              "cpst_usd": 6.31e-05,
+              "escalation_rate": 0.04,
+              "frontier_rate": 0.04,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.6
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.00305182,
+              "cpst_usd": 6.31e-05,
+              "escalation_rate": 0.04,
+              "frontier_rate": 0.04,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.65
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.00305182,
+              "cpst_usd": 6.31e-05,
+              "escalation_rate": 0.04,
+              "frontier_rate": 0.04,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.7
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.00305182,
+              "cpst_usd": 6.31e-05,
+              "escalation_rate": 0.04,
+              "frontier_rate": 0.04,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.75
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.00305182,
+              "cpst_usd": 6.31e-05,
+              "escalation_rate": 0.04,
+              "frontier_rate": 0.04,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.8
+            },
+            {
+              "success_rate": 0.9,
+              "passed": 45,
+              "tasks": 50,
+              "total_cost_usd": 0.00603069,
+              "cpst_usd": 0.00012712,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 6,
+                  "cost_usd": 0.00184878
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.00398278
+                }
+              },
+              "parameter": 0.85
+            },
+            {
+              "success_rate": 0.9,
+              "passed": 45,
+              "tasks": 50,
+              "total_cost_usd": 0.01311475,
+              "cpst_usd": 0.00025062,
+              "escalation_rate": 0.36,
+              "frontier_rate": 0.36,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 6,
+                  "cost_usd": 0.00277752
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.01013809
+                }
+              },
+              "parameter": 0.9
+            },
+            {
+              "success_rate": 0.9,
+              "passed": 45,
+              "tasks": 50,
+              "total_cost_usd": 0.01434838,
+              "cpst_usd": 0.00025727,
+              "escalation_rate": 0.5,
+              "frontier_rate": 0.5,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00307776
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00026909
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01100153
+                }
+              },
+              "parameter": 0.95
+            }
+          ]
+        },
+        "completion_tokens": {
+          "signal": "small answer length",
+          "best_at_matched_success": null,
+          "curve": [
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.01508834,
+              "cpst_usd": 0.00028,
+              "escalation_rate": 0.96,
+              "frontier_rate": 0.96,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00322139
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00077245
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 0.0
+            },
+            {
+              "success_rate": 0.84,
+              "passed": 42,
+              "tasks": 50,
+              "total_cost_usd": 0.01467897,
+              "cpst_usd": 0.00027672,
+              "escalation_rate": 0.46,
+              "frontier_rate": 0.46,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 6,
+                  "cost_usd": 0.00318973
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00039474
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 20.0
+            },
+            {
+              "success_rate": 0.84,
+              "passed": 42,
+              "tasks": 50,
+              "total_cost_usd": 0.01401318,
+              "cpst_usd": 0.00026429,
+              "escalation_rate": 0.36,
+              "frontier_rate": 0.36,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 6,
+                  "cost_usd": 0.00271954
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 40.0
+            },
+            {
+              "success_rate": 0.84,
+              "passed": 42,
+              "tasks": 50,
+              "total_cost_usd": 0.01401318,
+              "cpst_usd": 0.00026429,
+              "escalation_rate": 0.36,
+              "frontier_rate": 0.36,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 6,
+                  "cost_usd": 0.00271954
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 60.0
+            },
+            {
+              "success_rate": 0.84,
+              "passed": 42,
+              "tasks": 50,
+              "total_cost_usd": 0.01381856,
+              "cpst_usd": 0.00025966,
+              "escalation_rate": 0.34,
+              "frontier_rate": 0.34,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 6,
+                  "cost_usd": 0.00252493
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 80.0
+            },
+            {
+              "success_rate": 0.84,
+              "passed": 42,
+              "tasks": 50,
+              "total_cost_usd": 0.01381856,
+              "cpst_usd": 0.00025966,
+              "escalation_rate": 0.34,
+              "frontier_rate": 0.34,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 6,
+                  "cost_usd": 0.00252493
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 100.0
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.01238696,
+              "cpst_usd": 0.0002242,
+              "escalation_rate": 0.28,
+              "frontier_rate": 0.28,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00240297
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.00978485
+                }
+              },
+              "parameter": 150.0
+            },
+            {
+              "success_rate": 0.84,
+              "passed": 42,
+              "tasks": 50,
+              "total_cost_usd": 0.00571875,
+              "cpst_usd": 0.00010603,
+              "escalation_rate": 0.1,
+              "frontier_rate": 0.1,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 12,
+                  "cost_usd": 0.00521443
+                }
+              },
+              "parameter": 200.0
+            },
+            {
+              "success_rate": 0.82,
+              "passed": 41,
+              "tasks": 50,
+              "total_cost_usd": 0.00146058,
+              "cpst_usd": 2.41e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.00095626
+                }
+              },
+              "parameter": 300.0
+            },
+            {
+              "success_rate": 0.82,
+              "passed": 41,
+              "tasks": 50,
+              "total_cost_usd": 0.00146058,
+              "cpst_usd": 2.41e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.00095626
+                }
+              },
+              "parameter": 500.0
+            }
+          ]
+        },
+        "prompt_tokens": {
+          "signal": "prompt length",
+          "best_at_matched_success": null,
+          "curve": [
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.01508834,
+              "cpst_usd": 0.00028,
+              "escalation_rate": 0.96,
+              "frontier_rate": 0.96,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00322139
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00077245
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 0.0
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.01508834,
+              "cpst_usd": 0.00028,
+              "escalation_rate": 0.96,
+              "frontier_rate": 0.96,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00322139
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00077245
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 20.0
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.01508834,
+              "cpst_usd": 0.00028,
+              "escalation_rate": 0.96,
+              "frontier_rate": 0.96,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00322139
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00077245
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 30.0
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.01508834,
+              "cpst_usd": 0.00028,
+              "escalation_rate": 0.96,
+              "frontier_rate": 0.96,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00322139
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00077245
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 40.0
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.01508834,
+              "cpst_usd": 0.00028,
+              "escalation_rate": 0.96,
+              "frontier_rate": 0.96,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00322139
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00077245
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 50.0
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.01341424,
+              "cpst_usd": 0.00026381,
+              "escalation_rate": 0.54,
+              "frontier_rate": 0.54,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00172682
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00059292
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0110945
+                }
+              },
+              "parameter": 60.0
+            },
+            {
+              "success_rate": 0.82,
+              "passed": 41,
+              "tasks": 50,
+              "total_cost_usd": 0.00985461,
+              "cpst_usd": 0.00020809,
+              "escalation_rate": 0.22,
+              "frontier_rate": 0.22,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.00935029
+                }
+              },
+              "parameter": 80.0
+            },
+            {
+              "success_rate": 0.82,
+              "passed": 41,
+              "tasks": 50,
+              "total_cost_usd": 0.00561043,
+              "cpst_usd": 0.00012531,
+              "escalation_rate": 0.1,
+              "frontier_rate": 0.1,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.00510611
+                }
+              },
+              "parameter": 100.0
+            },
+            {
+              "success_rate": 0.82,
+              "passed": 41,
+              "tasks": 50,
+              "total_cost_usd": 0.00146058,
+              "cpst_usd": 2.41e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.00095626
+                }
+              },
+              "parameter": 150.0
+            }
+          ]
+        },
+        "verifier_gate": {
+          "signal": "deterministic verifier, confidence fallback",
+          "best_at_matched_success": {
+            "success_rate": 0.92,
+            "passed": 46,
+            "tasks": 50,
+            "total_cost_usd": 0.00532488,
+            "cpst_usd": 9.32e-05,
+            "escalation_rate": 0.14,
+            "frontier_rate": 0.14,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 8,
+                "cost_usd": 0.00257825
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 0.00019913
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.0025475
+              }
+            },
+            "parameter": 0.5
+          },
+          "curve": [
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.5
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.55
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.6
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.65
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.7
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.75
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.8
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.00676016,
+              "cpst_usd": 0.00012351,
+              "escalation_rate": 0.18,
+              "frontier_rate": 0.18,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.00398278
+                }
+              },
+              "parameter": 0.85
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.01291548,
+              "cpst_usd": 0.00023638,
+              "escalation_rate": 0.34,
+              "frontier_rate": 0.34,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.01013809
+                }
+              },
+              "parameter": 0.9
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.01377891,
+              "cpst_usd": 0.0002398,
+              "escalation_rate": 0.36,
+              "frontier_rate": 0.36,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01100153
+                }
+              },
+              "parameter": 0.95
+            }
+          ]
+        },
+        "refusal_gate": {
+          "signal": "refusal verifier only (no gold), confidence fallback",
+          "best_at_matched_success": {
+            "success_rate": 0.92,
+            "passed": 46,
+            "tasks": 50,
+            "total_cost_usd": 0.00532488,
+            "cpst_usd": 9.32e-05,
+            "escalation_rate": 0.14,
+            "frontier_rate": 0.14,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 8,
+                "cost_usd": 0.00257825
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 0.00019913
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.0025475
+              }
+            },
+            "parameter": 0.5
+          },
+          "curve": [
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.5
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.55
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.6
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.65
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.7
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.75
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00532488,
+              "cpst_usd": 9.32e-05,
+              "escalation_rate": 0.14,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.0025475
+                }
+              },
+              "parameter": 0.8
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.00676016,
+              "cpst_usd": 0.00012351,
+              "escalation_rate": 0.18,
+              "frontier_rate": 0.18,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.00398278
+                }
+              },
+              "parameter": 0.85
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.01291548,
+              "cpst_usd": 0.00023638,
+              "escalation_rate": 0.34,
+              "frontier_rate": 0.34,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.01013809
+                }
+              },
+              "parameter": 0.9
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.01384887,
+              "cpst_usd": 0.00024132,
+              "escalation_rate": 0.42,
+              "frontier_rate": 0.42,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00026909
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01100153
+                }
+              },
+              "parameter": 0.95
+            }
+          ]
+        },
+        "verifier_strict": {
+          "signal": "deterministic verifier, escalate when unverifiable",
+          "best_at_matched_success": {
+            "success_rate": 0.92,
+            "passed": 46,
+            "tasks": 50,
+            "total_cost_usd": 0.01546312,
+            "cpst_usd": 0.00027641,
+            "escalation_rate": 0.4,
+            "frontier_rate": 0.4,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 8,
+                "cost_usd": 0.00257825
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 0.00019913
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.01268574
+              }
+            }
+          },
+          "curve": []
+        },
+        "class_oracle": {
+          "signal": "task_class metadata (ceiling, not available in production)",
+          "best_at_matched_success": {
+            "success_rate": 0.86,
+            "passed": 43,
+            "tasks": 50,
+            "total_cost_usd": 0.0122338,
+            "cpst_usd": 0.00024013,
+            "escalation_rate": 0.0,
+            "frontier_rate": 0.3,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 5,
+                "cost_usd": 0.00030519
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 0.00019913
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.01172948
+              }
+            }
+          },
+          "curve": []
+        },
+        "keyword_router": {
+          "signal": "TF-IDF prompt classifier",
+          "best_at_matched_success": {
+            "success_rate": 0.9,
+            "passed": 45,
+            "tasks": 50,
+            "total_cost_usd": 0.01519596,
+            "cpst_usd": 0.00027856,
+            "escalation_rate": 0.0,
+            "frontier_rate": 0.92,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 7,
+                "cost_usd": 0.0029162
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 0.00055028
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.01172948
+              }
+            },
+            "parameter": 0.3
+          },
+          "curve": [
+            {
+              "success_rate": 0.9,
+              "passed": 45,
+              "tasks": 50,
+              "total_cost_usd": 0.015219,
+              "cpst_usd": 0.00027908,
+              "escalation_rate": 0.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.0029162
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00057332
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01172948
+                }
+              },
+              "parameter": 0.1
+            },
+            {
+              "success_rate": 0.9,
+              "passed": 45,
+              "tasks": 50,
+              "total_cost_usd": 0.015219,
+              "cpst_usd": 0.00027908,
+              "escalation_rate": 0.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.0029162
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00057332
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01172948
+                }
+              },
+              "parameter": 0.2
+            },
+            {
+              "success_rate": 0.9,
+              "passed": 45,
+              "tasks": 50,
+              "total_cost_usd": 0.01519596,
+              "cpst_usd": 0.00027856,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.92,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.0029162
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00055028
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01172948
+                }
+              },
+              "parameter": 0.3
+            },
+            {
+              "success_rate": 0.88,
+              "passed": 44,
+              "tasks": 50,
+              "total_cost_usd": 0.01466477,
+              "cpst_usd": 0.00027563,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.46,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 6,
+                  "cost_usd": 0.00253928
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00039601
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01172948
+                }
+              },
+              "parameter": 0.4
+            },
+            {
+              "success_rate": 0.84,
+              "passed": 42,
+              "tasks": 50,
+              "total_cost_usd": 0.00589632,
+              "cpst_usd": 0.00011536,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 4,
+                  "cost_usd": 0.00100241
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00469477
+                }
+              },
+              "parameter": 0.5
+            },
+            {
+              "success_rate": 0.82,
+              "passed": 41,
+              "tasks": 50,
+              "total_cost_usd": 0.00371402,
+              "cpst_usd": 7.906e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.06,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.0032097
+                }
+              },
+              "parameter": 0.6
+            },
+            {
+              "success_rate": 0.82,
+              "passed": 41,
+              "tasks": 50,
+              "total_cost_usd": 0.00146058,
+              "cpst_usd": 2.41e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.00095626
+                }
+              },
+              "parameter": 0.7
+            },
+            {
+              "success_rate": 0.82,
+              "passed": 41,
+              "tasks": 50,
+              "total_cost_usd": 0.00146058,
+              "cpst_usd": 2.41e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.00095626
+                }
+              },
+              "parameter": 0.8
+            },
+            {
+              "success_rate": 0.82,
+              "passed": 41,
+              "tasks": 50,
+              "total_cost_usd": 0.00146058,
+              "cpst_usd": 2.41e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 5,
+                  "cost_usd": 0.00030519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 11,
+                  "cost_usd": 0.00095626
+                }
+              },
+              "parameter": 0.9
+            }
+          ],
+          "auc": 0.9352
+        },
+        "hybrid": {
+          "signal": "keyword pre-route + verifier gate",
+          "best_at_matched_success": {
+            "success_rate": 0.94,
+            "passed": 47,
+            "tasks": 50,
+            "total_cost_usd": 0.00676016,
+            "cpst_usd": 0.00012351,
+            "escalation_rate": 0.18,
+            "frontier_rate": 0.18,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 8,
+                "cost_usd": 0.00257825
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 0.00019913
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 14,
+                "cost_usd": 0.00398278
+              }
+            },
+            "parameter": 0.7
+          },
+          "curve": [
+            {
+              "success_rate": 0.9,
+              "passed": 45,
+              "tasks": 50,
+              "total_cost_usd": 0.015219,
+              "cpst_usd": 0.00027908,
+              "escalation_rate": 0.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.0029162
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00057332
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01172948
+                }
+              },
+              "parameter": 0.1
+            },
+            {
+              "success_rate": 0.9,
+              "passed": 45,
+              "tasks": 50,
+              "total_cost_usd": 0.015219,
+              "cpst_usd": 0.00027908,
+              "escalation_rate": 0.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.0029162
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00057332
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01172948
+                }
+              },
+              "parameter": 0.2
+            },
+            {
+              "success_rate": 0.9,
+              "passed": 45,
+              "tasks": 50,
+              "total_cost_usd": 0.01519596,
+              "cpst_usd": 0.00027856,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.92,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.0029162
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00055028
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01172948
+                }
+              },
+              "parameter": 0.3
+            },
+            {
+              "success_rate": 0.9,
+              "passed": 45,
+              "tasks": 50,
+              "total_cost_usd": 0.01484004,
+              "cpst_usd": 0.00027039,
+              "escalation_rate": 0.04,
+              "frontier_rate": 0.5,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00271455
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00039601
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01172948
+                }
+              },
+              "parameter": 0.4
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00887152,
+              "cpst_usd": 0.00017067,
+              "escalation_rate": 0.12,
+              "frontier_rate": 0.26,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00259932
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.00607306
+                }
+              },
+              "parameter": 0.5
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.0090136,
+              "cpst_usd": 0.00017145,
+              "escalation_rate": 0.18,
+              "frontier_rate": 0.24,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.00623622
+                }
+              },
+              "parameter": 0.6
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.00676016,
+              "cpst_usd": 0.00012351,
+              "escalation_rate": 0.18,
+              "frontier_rate": 0.18,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.00398278
+                }
+              },
+              "parameter": 0.7
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.00676016,
+              "cpst_usd": 0.00012351,
+              "escalation_rate": 0.18,
+              "frontier_rate": 0.18,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.00398278
+                }
+              },
+              "parameter": 0.8
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.00676016,
+              "cpst_usd": 0.00012351,
+              "escalation_rate": 0.18,
+              "frontier_rate": 0.18,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00257825
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00019913
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.00398278
+                }
+              },
+              "parameter": 0.9
+            }
+          ]
+        }
+      }
+    },
+    "flash": {
+      "_meta": {
+        "run": "flash",
+        "tasks": 50,
+        "class_counts": {
+          "should_refuse": 10,
+          "small_sufficient": 25,
+          "frontier_required": 15
+        },
+        "confidence_threshold_used": 0.85,
+        "caveats": [
+          "Recorded 50-task sample per model; one task moves 2pp of success.",
+          "exact_match/field_match verifiers use gold expectations: verifier_gate is an upper bound for shipping cheap checkers.",
+          "class_oracle reads task_class metadata unavailable in production.",
+          "keyword_router is 5-fold out-of-fold on 50 tasks (15 positives).",
+          "Costs are serving costs from the recorded ledger; judging is offline."
+        ]
+      },
+      "baselines": {
+        "all_frontier": {
+          "success_rate": 0.96,
+          "passed": 48,
+          "tasks": 50,
+          "total_cost_usd": 0.01579619,
+          "cpst_usd": 0.00029331,
+          "escalation_rate": 0.0,
+          "frontier_rate": 1.0,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 10,
+              "cost_usd": 0.0032028
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 25,
+              "cost_usd": 0.00059331
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 13,
+              "cost_usd": 0.01200008
+            }
+          }
+        },
+        "all_small": {
+          "success_rate": 0.76,
+          "passed": 38,
+          "tasks": 50,
+          "total_cost_usd": 0.00066492,
+          "cpst_usd": 1.191e-05,
+          "escalation_rate": 0.0,
+          "frontier_rate": 0.0,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 1,
+              "cost_usd": 0.0001519
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 24,
+              "cost_usd": 5.851e-05
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 13,
+              "cost_usd": 0.00045451
+            }
+          }
+        },
+        "oracle": {
+          "success_rate": 0.98,
+          "passed": 49,
+          "tasks": 50,
+          "total_cost_usd": 0.00462201,
+          "cpst_usd": 9.362e-05,
+          "escalation_rate": 0.0,
+          "frontier_rate": 0.22,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 10,
+              "cost_usd": 0.00311461
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 25,
+              "cost_usd": 6.983e-05
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 14,
+              "cost_usd": 0.00143756
+            }
+          }
+        }
+      },
+      "fixed_threshold": {
+        "confidence": {
+          "success_rate": 0.92,
+          "passed": 46,
+          "tasks": 50,
+          "total_cost_usd": 0.01156031,
+          "cpst_usd": 0.00021245,
+          "escalation_rate": 0.36,
+          "frontier_rate": 0.36,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 8,
+              "cost_usd": 0.00315743
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 25,
+              "cost_usd": 7.183e-05
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 13,
+              "cost_usd": 0.00833105
+            }
+          }
+        },
+        "verifier_gate": {
+          "success_rate": 0.96,
+          "passed": 48,
+          "tasks": 50,
+          "total_cost_usd": 0.01166494,
+          "cpst_usd": 0.00020594,
+          "escalation_rate": 0.4,
+          "frontier_rate": 0.4,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 10,
+              "cost_usd": 0.00326205
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 25,
+              "cost_usd": 7.183e-05
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 13,
+              "cost_usd": 0.00833105
+            }
+          }
+        },
+        "refusal_gate": {
+          "success_rate": 0.96,
+          "passed": 48,
+          "tasks": 50,
+          "total_cost_usd": 0.01166494,
+          "cpst_usd": 0.00020594,
+          "escalation_rate": 0.4,
+          "frontier_rate": 0.4,
+          "per_class": {
+            "should_refuse": {
+              "tasks": 10,
+              "passed": 10,
+              "cost_usd": 0.00326205
+            },
+            "small_sufficient": {
+              "tasks": 25,
+              "passed": 25,
+              "cost_usd": 7.183e-05
+            },
+            "frontier_required": {
+              "tasks": 15,
+              "passed": 13,
+              "cost_usd": 0.00833105
+            }
+          }
+        }
+      },
+      "signals": {
+        "confidence": {
+          "signal": "mean token probability",
+          "best_at_matched_success": null,
+          "curve": [
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00066492,
+              "cpst_usd": 1.191e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.5
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00066492,
+              "cpst_usd": 1.191e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.55
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00066492,
+              "cpst_usd": 1.191e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.6
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00066492,
+              "cpst_usd": 1.191e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.65
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00066492,
+              "cpst_usd": 1.191e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.7
+            },
+            {
+              "success_rate": 0.74,
+              "passed": 37,
+              "tasks": 50,
+              "total_cost_usd": 0.00152702,
+              "cpst_usd": 1.148e-05,
+              "escalation_rate": 0.02,
+              "frontier_rate": 0.02,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 12,
+                  "cost_usd": 0.00131662
+                }
+              },
+              "parameter": 0.75
+            },
+            {
+              "success_rate": 0.8,
+              "passed": 40,
+              "tasks": 50,
+              "total_cost_usd": 0.00393805,
+              "cpst_usd": 7.255e-05,
+              "escalation_rate": 0.1,
+              "frontier_rate": 0.1,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 4,
+                  "cost_usd": 0.00179546
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 12,
+                  "cost_usd": 0.00208408
+                }
+              },
+              "parameter": 0.8
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.01156031,
+              "cpst_usd": 0.00021245,
+              "escalation_rate": 0.36,
+              "frontier_rate": 0.36,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00315743
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00833105
+                }
+              },
+              "parameter": 0.85
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.01398365,
+              "cpst_usd": 0.00026513,
+              "escalation_rate": 0.42,
+              "frontier_rate": 0.42,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00315743
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01075439
+                }
+              },
+              "parameter": 0.9
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.01399697,
+              "cpst_usd": 0.00026542,
+              "escalation_rate": 0.44,
+              "frontier_rate": 0.44,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00315743
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 8.515e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01075439
+                }
+              },
+              "parameter": 0.95
+            }
+          ]
+        },
+        "completion_tokens": {
+          "signal": "small answer length",
+          "best_at_matched_success": {
+            "success_rate": 0.96,
+            "passed": 48,
+            "tasks": 50,
+            "total_cost_usd": 0.01646111,
+            "cpst_usd": 0.00030586,
+            "escalation_rate": 1.0,
+            "frontier_rate": 1.0,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 10,
+                "cost_usd": 0.00335469
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 0.00065182
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.01245459
+              }
+            },
+            "parameter": 0.0
+          },
+          "curve": [
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01646111,
+              "cpst_usd": 0.00030586,
+              "escalation_rate": 1.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00335469
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00065182
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01245459
+                }
+              },
+              "parameter": 0.0
+            },
+            {
+              "success_rate": 0.9,
+              "passed": 45,
+              "tasks": 50,
+              "total_cost_usd": 0.01588613,
+              "cpst_usd": 0.00031325,
+              "escalation_rate": 0.46,
+              "frontier_rate": 0.46,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 8,
+                  "cost_usd": 0.00315743
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 0.00027411
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01245459
+                }
+              },
+              "parameter": 20.0
+            },
+            {
+              "success_rate": 0.88,
+              "passed": 44,
+              "tasks": 50,
+              "total_cost_usd": 0.01534262,
+              "cpst_usd": 0.00030783,
+              "escalation_rate": 0.42,
+              "frontier_rate": 0.42,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00282952
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01245459
+                }
+              },
+              "parameter": 40.0
+            },
+            {
+              "success_rate": 0.88,
+              "passed": 44,
+              "tasks": 50,
+              "total_cost_usd": 0.01534262,
+              "cpst_usd": 0.00030783,
+              "escalation_rate": 0.42,
+              "frontier_rate": 0.42,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 7,
+                  "cost_usd": 0.00282952
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01245459
+                }
+              },
+              "parameter": 60.0
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.01460216,
+              "cpst_usd": 0.00029741,
+              "escalation_rate": 0.38,
+              "frontier_rate": 0.38,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 6,
+                  "cost_usd": 0.00271822
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01182543
+                }
+              },
+              "parameter": 80.0
+            },
+            {
+              "success_rate": 0.82,
+              "passed": 41,
+              "tasks": 50,
+              "total_cost_usd": 0.01348747,
+              "cpst_usd": 0.00028369,
+              "escalation_rate": 0.32,
+              "frontier_rate": 0.32,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 4,
+                  "cost_usd": 0.00233233
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01109663
+                }
+              },
+              "parameter": 100.0
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00481747,
+              "cpst_usd": 9.868e-05,
+              "escalation_rate": 0.1,
+              "frontier_rate": 0.1,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00460706
+                }
+              },
+              "parameter": 150.0
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00145404,
+              "cpst_usd": 3.268e-05,
+              "escalation_rate": 0.02,
+              "frontier_rate": 0.02,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00124363
+                }
+              },
+              "parameter": 200.0
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00066492,
+              "cpst_usd": 1.191e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 300.0
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00066492,
+              "cpst_usd": 1.191e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 500.0
+            }
+          ]
+        },
+        "prompt_tokens": {
+          "signal": "prompt length",
+          "best_at_matched_success": {
+            "success_rate": 0.96,
+            "passed": 48,
+            "tasks": 50,
+            "total_cost_usd": 0.01646111,
+            "cpst_usd": 0.00030586,
+            "escalation_rate": 1.0,
+            "frontier_rate": 1.0,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 10,
+                "cost_usd": 0.00335469
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 0.00065182
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.01245459
+              }
+            },
+            "parameter": 0.0
+          },
+          "curve": [
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01646111,
+              "cpst_usd": 0.00030586,
+              "escalation_rate": 1.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00335469
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00065182
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01245459
+                }
+              },
+              "parameter": 0.0
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01646111,
+              "cpst_usd": 0.00030586,
+              "escalation_rate": 1.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00335469
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00065182
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01245459
+                }
+              },
+              "parameter": 20.0
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01646111,
+              "cpst_usd": 0.00030586,
+              "escalation_rate": 1.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00335469
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00065182
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01245459
+                }
+              },
+              "parameter": 30.0
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01646111,
+              "cpst_usd": 0.00030586,
+              "escalation_rate": 1.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00335469
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00065182
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01245459
+                }
+              },
+              "parameter": 40.0
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01646111,
+              "cpst_usd": 0.00030586,
+              "escalation_rate": 1.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00335469
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00065182
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01245459
+                }
+              },
+              "parameter": 50.0
+            },
+            {
+              "success_rate": 0.8,
+              "passed": 40,
+              "tasks": 50,
+              "total_cost_usd": 0.01461105,
+              "cpst_usd": 0.00031831,
+              "escalation_rate": 0.58,
+              "frontier_rate": 0.58,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 3,
+                  "cost_usd": 0.00168416
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 0.00047229
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01245459
+                }
+              },
+              "parameter": 60.0
+            },
+            {
+              "success_rate": 0.78,
+              "passed": 39,
+              "tasks": 50,
+              "total_cost_usd": 0.01017999,
+              "cpst_usd": 0.00025631,
+              "escalation_rate": 0.24,
+              "frontier_rate": 0.24,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 14,
+                  "cost_usd": 0.00996958
+                }
+              },
+              "parameter": 80.0
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00486942,
+              "cpst_usd": 0.00012255,
+              "escalation_rate": 0.1,
+              "frontier_rate": 0.1,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00465902
+                }
+              },
+              "parameter": 100.0
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00066492,
+              "cpst_usd": 1.191e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 150.0
+            }
+          ]
+        },
+        "verifier_gate": {
+          "signal": "deterministic verifier, confidence fallback",
+          "best_at_matched_success": {
+            "success_rate": 0.96,
+            "passed": 48,
+            "tasks": 50,
+            "total_cost_usd": 0.0037884,
+            "cpst_usd": 7.761e-05,
+            "escalation_rate": 0.2,
+            "frontier_rate": 0.2,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 10,
+                "cost_usd": 0.00326205
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 7.183e-05
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.00045451
+              }
+            },
+            "parameter": 0.5
+          },
+          "curve": [
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.0037884,
+              "cpst_usd": 7.761e-05,
+              "escalation_rate": 0.2,
+              "frontier_rate": 0.2,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.5
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.0037884,
+              "cpst_usd": 7.761e-05,
+              "escalation_rate": 0.2,
+              "frontier_rate": 0.2,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.55
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.0037884,
+              "cpst_usd": 7.761e-05,
+              "escalation_rate": 0.2,
+              "frontier_rate": 0.2,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.6
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.0037884,
+              "cpst_usd": 7.761e-05,
+              "escalation_rate": 0.2,
+              "frontier_rate": 0.2,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.65
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.0037884,
+              "cpst_usd": 7.761e-05,
+              "escalation_rate": 0.2,
+              "frontier_rate": 0.2,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.7
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.0046505,
+              "cpst_usd": 7.867e-05,
+              "escalation_rate": 0.22,
+              "frontier_rate": 0.22,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 12,
+                  "cost_usd": 0.00131662
+                }
+              },
+              "parameter": 0.75
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.00541797,
+              "cpst_usd": 9.5e-05,
+              "escalation_rate": 0.24,
+              "frontier_rate": 0.24,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 12,
+                  "cost_usd": 0.00208408
+                }
+              },
+              "parameter": 0.8
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01166494,
+              "cpst_usd": 0.00020594,
+              "escalation_rate": 0.4,
+              "frontier_rate": 0.4,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00833105
+                }
+              },
+              "parameter": 0.85
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01408827,
+              "cpst_usd": 0.00025642,
+              "escalation_rate": 0.46,
+              "frontier_rate": 0.46,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01075439
+                }
+              },
+              "parameter": 0.9
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01408827,
+              "cpst_usd": 0.00025642,
+              "escalation_rate": 0.46,
+              "frontier_rate": 0.46,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01075439
+                }
+              },
+              "parameter": 0.95
+            }
+          ]
+        },
+        "refusal_gate": {
+          "signal": "refusal verifier only (no gold), confidence fallback",
+          "best_at_matched_success": {
+            "success_rate": 0.96,
+            "passed": 48,
+            "tasks": 50,
+            "total_cost_usd": 0.01166494,
+            "cpst_usd": 0.00020594,
+            "escalation_rate": 0.4,
+            "frontier_rate": 0.4,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 10,
+                "cost_usd": 0.00326205
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 7.183e-05
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.00833105
+              }
+            },
+            "parameter": 0.85
+          },
+          "curve": [
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.00377507,
+              "cpst_usd": 7.894e-05,
+              "escalation_rate": 0.18,
+              "frontier_rate": 0.18,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.5
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.00377507,
+              "cpst_usd": 7.894e-05,
+              "escalation_rate": 0.18,
+              "frontier_rate": 0.18,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.55
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.00377507,
+              "cpst_usd": 7.894e-05,
+              "escalation_rate": 0.18,
+              "frontier_rate": 0.18,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.6
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.00377507,
+              "cpst_usd": 7.894e-05,
+              "escalation_rate": 0.18,
+              "frontier_rate": 0.18,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.65
+            },
+            {
+              "success_rate": 0.94,
+              "passed": 47,
+              "tasks": 50,
+              "total_cost_usd": 0.00377507,
+              "cpst_usd": 7.894e-05,
+              "escalation_rate": 0.18,
+              "frontier_rate": 0.18,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.7
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00463718,
+              "cpst_usd": 8.005e-05,
+              "escalation_rate": 0.2,
+              "frontier_rate": 0.2,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 12,
+                  "cost_usd": 0.00131662
+                }
+              },
+              "parameter": 0.75
+            },
+            {
+              "success_rate": 0.92,
+              "passed": 46,
+              "tasks": 50,
+              "total_cost_usd": 0.00540464,
+              "cpst_usd": 9.674e-05,
+              "escalation_rate": 0.22,
+              "frontier_rate": 0.22,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 12,
+                  "cost_usd": 0.00208408
+                }
+              },
+              "parameter": 0.8
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01166494,
+              "cpst_usd": 0.00020594,
+              "escalation_rate": 0.4,
+              "frontier_rate": 0.4,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00833105
+                }
+              },
+              "parameter": 0.85
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01408827,
+              "cpst_usd": 0.00025642,
+              "escalation_rate": 0.46,
+              "frontier_rate": 0.46,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01075439
+                }
+              },
+              "parameter": 0.9
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.0141016,
+              "cpst_usd": 0.0002567,
+              "escalation_rate": 0.48,
+              "frontier_rate": 0.48,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 8.515e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01075439
+                }
+              },
+              "parameter": 0.95
+            }
+          ]
+        },
+        "verifier_strict": {
+          "signal": "deterministic verifier, escalate when unverifiable",
+          "best_at_matched_success": {
+            "success_rate": 0.96,
+            "passed": 48,
+            "tasks": 50,
+            "total_cost_usd": 0.01578848,
+            "cpst_usd": 0.00029185,
+            "escalation_rate": 0.5,
+            "frontier_rate": 0.5,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 10,
+                "cost_usd": 0.00326205
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 7.183e-05
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.01245459
+              }
+            }
+          },
+          "curve": []
+        },
+        "class_oracle": {
+          "signal": "task_class metadata (ceiling, not available in production)",
+          "best_at_matched_success": {
+            "success_rate": 0.76,
+            "passed": 38,
+            "tasks": 50,
+            "total_cost_usd": 0.01221049,
+            "cpst_usd": 0.0002722,
+            "escalation_rate": 0.0,
+            "frontier_rate": 0.3,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 1,
+                "cost_usd": 0.0001519
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 24,
+                "cost_usd": 5.851e-05
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.01200008
+              }
+            }
+          },
+          "curve": []
+        },
+        "keyword_router": {
+          "signal": "TF-IDF prompt classifier",
+          "best_at_matched_success": {
+            "success_rate": 0.96,
+            "passed": 48,
+            "tasks": 50,
+            "total_cost_usd": 0.01575187,
+            "cpst_usd": 0.00029238,
+            "escalation_rate": 0.0,
+            "frontier_rate": 0.92,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 10,
+                "cost_usd": 0.0032028
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 0.00054899
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.01200008
+              }
+            },
+            "parameter": 0.3
+          },
+          "curve": [
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01579619,
+              "cpst_usd": 0.00029331,
+              "escalation_rate": 0.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.0032028
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00059331
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01200008
+                }
+              },
+              "parameter": 0.1
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01579619,
+              "cpst_usd": 0.00029331,
+              "escalation_rate": 0.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.0032028
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00059331
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01200008
+                }
+              },
+              "parameter": 0.2
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01575187,
+              "cpst_usd": 0.00029238,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.92,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.0032028
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00054899
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01200008
+                }
+              },
+              "parameter": 0.3
+            },
+            {
+              "success_rate": 0.86,
+              "passed": 43,
+              "tasks": 50,
+              "total_cost_usd": 0.01505348,
+              "cpst_usd": 0.00030892,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.46,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 6,
+                  "cost_usd": 0.0027626
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 0.00029081
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01200008
+                }
+              },
+              "parameter": 0.4
+            },
+            {
+              "success_rate": 0.78,
+              "passed": 39,
+              "tasks": 50,
+              "total_cost_usd": 0.00538488,
+              "cpst_usd": 0.00011149,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.14,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 3,
+                  "cost_usd": 0.00087356
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 12,
+                  "cost_usd": 0.00445281
+                }
+              },
+              "parameter": 0.5
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00308884,
+              "cpst_usd": 7.57e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.06,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00287844
+                }
+              },
+              "parameter": 0.6
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00066492,
+              "cpst_usd": 1.191e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.7
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00066492,
+              "cpst_usd": 1.191e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.8
+            },
+            {
+              "success_rate": 0.76,
+              "passed": 38,
+              "tasks": 50,
+              "total_cost_usd": 0.00066492,
+              "cpst_usd": 1.191e-05,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 1,
+                  "cost_usd": 0.0001519
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 24,
+                  "cost_usd": 5.851e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00045451
+                }
+              },
+              "parameter": 0.9
+            }
+          ],
+          "auc": 0.9352
+        },
+        "hybrid": {
+          "signal": "keyword pre-route + verifier gate",
+          "best_at_matched_success": {
+            "success_rate": 0.96,
+            "passed": 48,
+            "tasks": 50,
+            "total_cost_usd": 0.01166494,
+            "cpst_usd": 0.00020594,
+            "escalation_rate": 0.4,
+            "frontier_rate": 0.4,
+            "per_class": {
+              "should_refuse": {
+                "tasks": 10,
+                "passed": 10,
+                "cost_usd": 0.00326205
+              },
+              "small_sufficient": {
+                "tasks": 25,
+                "passed": 25,
+                "cost_usd": 7.183e-05
+              },
+              "frontier_required": {
+                "tasks": 15,
+                "passed": 13,
+                "cost_usd": 0.00833105
+              }
+            },
+            "parameter": 0.7
+          },
+          "curve": [
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01579619,
+              "cpst_usd": 0.00029331,
+              "escalation_rate": 0.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.0032028
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00059331
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01200008
+                }
+              },
+              "parameter": 0.1
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01579619,
+              "cpst_usd": 0.00029331,
+              "escalation_rate": 0.0,
+              "frontier_rate": 1.0,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.0032028
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00059331
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01200008
+                }
+              },
+              "parameter": 0.2
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01575187,
+              "cpst_usd": 0.00029238,
+              "escalation_rate": 0.0,
+              "frontier_rate": 0.92,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.0032028
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00054899
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01200008
+                }
+              },
+              "parameter": 0.3
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01555733,
+              "cpst_usd": 0.00028833,
+              "escalation_rate": 0.1,
+              "frontier_rate": 0.56,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00325311
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 0.00030413
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.01200008
+                }
+              },
+              "parameter": 0.4
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01246863,
+              "cpst_usd": 0.00022326,
+              "escalation_rate": 0.28,
+              "frontier_rate": 0.42,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00322425
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00917255
+                }
+              },
+              "parameter": 0.5
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01256163,
+              "cpst_usd": 0.00022462,
+              "escalation_rate": 0.36,
+              "frontier_rate": 0.42,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00922774
+                }
+              },
+              "parameter": 0.6
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01166494,
+              "cpst_usd": 0.00020594,
+              "escalation_rate": 0.4,
+              "frontier_rate": 0.4,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00833105
+                }
+              },
+              "parameter": 0.7
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01166494,
+              "cpst_usd": 0.00020594,
+              "escalation_rate": 0.4,
+              "frontier_rate": 0.4,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00833105
+                }
+              },
+              "parameter": 0.8
+            },
+            {
+              "success_rate": 0.96,
+              "passed": 48,
+              "tasks": 50,
+              "total_cost_usd": 0.01166494,
+              "cpst_usd": 0.00020594,
+              "escalation_rate": 0.4,
+              "frontier_rate": 0.4,
+              "per_class": {
+                "should_refuse": {
+                  "tasks": 10,
+                  "passed": 10,
+                  "cost_usd": 0.00326205
+                },
+                "small_sufficient": {
+                  "tasks": 25,
+                  "passed": 25,
+                  "cost_usd": 7.183e-05
+                },
+                "frontier_required": {
+                  "tasks": 15,
+                  "passed": 13,
+                  "cost_usd": 0.00833105
+                }
+              },
+              "parameter": 0.9
+            }
+          ]
+        }
+      }
+    }
+  }
+}

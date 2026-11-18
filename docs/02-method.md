@@ -24,7 +24,7 @@ task.json ──> router(confidence) ──> CascadeEngine
 
 | 对象 | 作用 | 关键字段 |
 |---|---|---|
-| `task` | 输入工作单元 | `task_id`, `kind`, `prompt`, `expected_difficulty`, `tags`, `created_at` |
+| `task` | 输入工作单元 | `task_id`, `kind`, `prompt`, `expected_difficulty`, `tags`, `created_at`, 可选 `task_class` / `verification` |
 | `route_decision` | 一次尝试的路由决策 | `policy`, `selected_model`, `confidence`, `escalated`, `reason` |
 | `model_response` | 模型返回 | `model`, `content`, `success`, `latency_ms`, `usage`, 可选 `confidence` |
 | `cost_record` | 任务级账本 | `model`, `attempts`, `cost_usd`, `latency_ms`, `success`, `cost_per_successful_task_usd` |
@@ -33,6 +33,8 @@ task.json ──> router(confidence) ──> CascadeEngine
 
 - `kind`：`simple | medium | complex`
 - `expected_difficulty`：`low | medium | high`
+- `task_class`：`should_refuse | small_sufficient | frontier_required`
+- `verification.type`：`exact_match | field_match | regex | json_schema | refusal | llm_judge`
 - `policy`：`all_frontier | cascade | all_small`
 - `selected_model` / `model`：`small | frontier`
 
@@ -46,13 +48,15 @@ task.json ──> router(confidence) ──> CascadeEngine
 
 ## 3. 合成任务流
 
-`gen_tasks.py` 用固定模板与固定种子生成 100 条任务：
+`gen_tasks.py` 用固定模板与固定种子生成 100 条任务。先按 `task_class` 分配，再在每个类内分配难度：
 
-- 50 条 `simple`（天气、邮件归类、日程确认等）
-- 30 条 `medium`
-- 20 条 `complex`（跨平台比价、长程研究等）
+- **应拒答** `should_refuse` 20 条：缺少实时数据、附件或访问权限，正确行为是说明缺什么而不是编造；
+- **小模型够用** `small_sufficient` 50 条：有确定性 verifier（精确值、字段、正则或 JSON）；
+- **必须旗舰** `frontier_required` 30 条：开放式分析与设计，只能由 rubric 或 LLM 裁判判定。
 
-> 初版规格建议约 80/20 的简单/复杂分布；实际采用 **50/30/20**，以便验证中档难度下的阈值行为。该偏离已在实现时明确记录；面板提供流量混合权重，可把结论外推到不同分布。
+难度保持 **50/30/20**（simple/medium/complex），使 mock 账本与旧实验仍可对照。每条任务携带 `verification` 规格；离线判定优先用确定性 verifier，只有 `llm_judge` 类型才调用裁判。
+
+> 本轮重建替换了任务内容，但保留 `task_id` 编号规则。2026-11-11 之前的真实账本是按旧任务文件生成的；重新判定旧账本时必须使用当时保存的来源，不能直接套用新的 `seed_tasks.jsonl`。
 
 同一次运行两次输出字节一致；100 个 `task_id` 与 prompt 均唯一。产物：`data/synthetic/seed_tasks.jsonl`。
 

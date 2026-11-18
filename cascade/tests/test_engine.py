@@ -14,10 +14,11 @@ FAILED_USAGE = {"prompt_tokens": 100, "completion_tokens": 0, "total_tokens": 10
 class ScriptedBackend:
     """In-process backend that returns pre-scripted success flags."""
 
-    def __init__(self, role, outcomes, confidences=None):
+    def __init__(self, role, outcomes, confidences=None, contents=None):
         self.role = role
         self.outcomes = list(outcomes)
         self.confidences = list(confidences) if confidences else []
+        self.contents = list(contents) if contents else []
         self.calls = []
 
     def complete(self, task, attempt=1):
@@ -25,10 +26,14 @@ class ScriptedBackend:
         index = min(attempt - 1, len(self.outcomes) - 1)
         success = self.outcomes[index]
         usage = dict(SMALL_USAGE if success else FAILED_USAGE)
+        if self.contents:
+            content = self.contents[min(index, len(self.contents) - 1)]
+        else:
+            content = "fake answer" if success else ""
         response = {
             "task_id": task["task_id"],
             "model": self.role,
-            "content": "fake answer" if success else "",
+            "content": content,
             "success": success,
             "latency_ms": 100.0,
             "usage": usage,
@@ -238,3 +243,104 @@ def test_aggregate_reports_escalation_and_latency(pricing, policy):
     assert summary["escalation_rate"] == 1.0
     assert summary["avg_latency_ms"] == 200.0
     assert summary["tasks"] == 1
+
+
+def _verifier_policy(policy, mode="verifier_first"):
+    """Deep copy policy and enable verifier-first routing."""
+    import copy
+    p = copy.deepcopy(policy)
+    p["escalation_mode"] = mode
+    return p
+
+
+def _scripted(role, outcomes, confidences=None):
+    return ScriptedBackend(role, outcomes, confidences=confidences)
+
+
+def test_verifier_first_accepts_a_passing_answer_despite_low_confidence(pricing, policy):
+    # Confidence would escalate a hard "low success" task, but the verifier
+    # is the source of truth under verifier_first routing.
+    backends = {
+        "small": ScriptedBackend(
+            "small", [True], confidences=[0.20], contents=["The answer is 3072."],
+        ),
+        "frontier": ScriptedBackend("frontier", [True]),
+    }
+    engine = CascadeEngine(backends, pricing, _verifier_policy(policy), "cascade")
+    task = dict(
+        TASK,
+        expected_difficulty="high",  # prior confidence 0.52 -> would escalate
+        verification={"type": "exact_match", "expected": "3072"},
+        prompt="What is 128 * 24?",
+    )
+    trace = engine.run_task(task)
+
+    assert len(trace["responses"]) == 1
+    assert trace["route_decisions"][0]["escalated"] is False
+    assert "verifier=" in trace["route_decisions"][0]["reason"]
+    assert "3072" in trace["route_decisions"][0]["reason"] or "matched expected" in trace["route_decisions"][0]["reason"]
+
+
+def test_verifier_first_escalates_when_the_verifier_fails(pricing, policy):
+    # High confidence does not help if the deterministic verifier says the
+    # answer is wrong.
+    backends = {
+        "small": _scripted("small", [True], confidences=[0.99]),
+        "frontier": _scripted("frontier", [True]),
+    }
+    engine = CascadeEngine(backends, pricing, _verifier_policy(policy), "cascade")
+    task = dict(
+        TASK,
+        verification={"type": "exact_match", "expected": "42"},
+        prompt="What is the answer to everything?",
+    )
+    trace = engine.run_task(task)
+
+    assert len(trace["responses"]) == 2
+    assert trace["route_decisions"][1]["escalated"] is True
+    assert "verifier failed" in trace["route_decisions"][1]["reason"]
+    assert backends["frontier"].calls == [1]
+
+
+def test_verifier_first_falls_back_to_confidence_when_no_verification_exists(pricing, policy):
+    # The baseline TASK has no verification spec, so verifier_first must still
+    # apply a gate — the confidence threshold — instead of running unconditionally.
+    backends = {
+        "small": _scripted("small", [True], confidences=[0.99]),
+        "frontier": _scripted("frontier", [True]),
+    }
+    engine = CascadeEngine(backends, pricing, _verifier_policy(policy), "cascade")
+    trace = engine.run_task(TASK)
+
+    assert len(trace["responses"]) == 1
+    assert "fell back to confidence" not in trace["route_decisions"][0].get("reason", "")
+
+    # Low confidence on an unverifiable task does escalate with a clear reason.
+    backends2 = {
+        "small": _scripted("small", [True], confidences=[0.10]),
+        "frontier": _scripted("frontier", [True]),
+    }
+    engine2 = CascadeEngine(backends2, pricing, _verifier_policy(policy), "cascade")
+    trace2 = engine2.run_task(TASK)
+
+    assert len(trace2["responses"]) == 2
+    assert trace2["route_decisions"][1]["escalated"] is True
+    assert "verifier unavailable" in trace2["route_decisions"][1]["reason"]
+
+
+def test_verifier_first_still_falls_back_on_small_model_http_failure(pricing, policy):
+    # The low-level HTTP-success check is above the verifier: a small model
+    # that returned no content must always escalate, regardless of policy.
+    backends = {
+        "small": _scripted("small", [False]),
+        "frontier": _scripted("frontier", [True]),
+    }
+    engine = CascadeEngine(backends, pricing, _verifier_policy(policy), "cascade")
+    task = dict(
+        TASK,
+        verification={"type": "exact_match", "expected": "anything"},
+    )
+    trace = engine.run_task(task)
+
+    assert len(trace["responses"]) == 2
+    assert "fallback" in trace["route_decisions"][1]["reason"]

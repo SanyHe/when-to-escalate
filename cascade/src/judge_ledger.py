@@ -27,6 +27,7 @@ sys.path.insert(0, _SRC_DIR)
 from judge import build_judge_backend, judge_answer, summarize_judged  # noqa: E402
 from pricing import call_cost, load_pricing  # noqa: E402
 from replay import _write_json, load_tasks  # noqa: E402
+from verifier import STATUS_NEEDS_JUDGE, verify_answer  # noqa: E402
 
 REPO_ROOT = os.path.abspath(os.path.join(_SRC_DIR, "..", ".."))
 DEFAULT_TASKS = os.path.join(REPO_ROOT, "data", "synthetic", "seed_tasks.jsonl")
@@ -45,7 +46,7 @@ def final_answer(trace: Dict[str, Any]) -> str:
 
 
 def judged_records_for_policy(traces: List[Dict[str, Any]],
-                              task_prompts: Dict[str, str],
+                              tasks_by_id: Dict[str, Dict[str, Any]],
                               backend: Any, pricing: Dict[str, Any],
                               sleep_s: float) -> List[Dict[str, Any]]:
     cache: Dict[str, Dict[str, Any]] = {}
@@ -54,14 +55,36 @@ def judged_records_for_policy(traces: List[Dict[str, Any]],
         task_id = trace["task_id"]
         answer = final_answer(trace)
         serving_cost = float(trace["cost_record"]["cost_usd"])
+        task = tasks_by_id.get(task_id, {})
+        verification = task.get("verification") or {}
         if not answer:
             records.append({
                 "task_id": task_id, "passed": False,
                 "reason": "no answer produced", "judge_failed": False,
+                "judged_by": "none",
+                "verification_type": verification.get("type", "none"),
                 "cost_usd": serving_cost, "judge_cost_usd": 0.0,
             })
             continue
-        prompt = task_prompts[task_id]
+
+        # A deterministic verifier is cheaper, reproducible and immune to
+        # judge drift, so it always wins when the task defines one.
+        if verification.get("type") and verification["type"] != "llm_judge":
+            result = verify_answer(task, answer)
+            if result["status"] != STATUS_NEEDS_JUDGE:
+                records.append({
+                    "task_id": task_id,
+                    "passed": result["status"] == "passed",
+                    "reason": result["reason"],
+                    "judge_failed": False,
+                    "judged_by": "verifier",
+                    "verification_type": result["type"],
+                    "cost_usd": serving_cost,
+                    "judge_cost_usd": 0.0,
+                })
+                continue
+
+        prompt = task.get("prompt", "")
         key = hashlib.sha256((prompt + "\n" + answer).encode("utf-8")).hexdigest()
         verdict = cache.get(key)
         if verdict is None:
@@ -75,9 +98,51 @@ def judged_records_for_policy(traces: List[Dict[str, Any]],
             "passed": bool(verdict["pass"]),
             "reason": verdict.get("reason", ""),
             "judge_failed": bool(verdict.get("judge_failed", False)),
+            "judged_by": "llm",
+            "verification_type": verification.get("type", "none"),
             "cost_usd": serving_cost,
             "judge_cost_usd": round(judge_cost, 9),
         })
+    return records
+
+
+def regrade_verifier_records(ledger: Dict[str, Any],
+                             records: Dict[str, List[Dict[str, Any]]],
+                             tasks_by_id: Dict[str, Dict[str, Any]]
+                             ) -> Dict[str, List[Dict[str, Any]]]:
+    """Refresh deterministic verdicts while keeping stored LLM verdicts.
+
+    Verifier rules can change after a ledger was judged. Re-calling the LLM
+    judge would add cost and drift, so this path reuses every ``llm_judge``
+    verdict and only re-runs the deterministic verifiers on recorded answers.
+    """
+    traces_by_policy = {
+        policy: {trace["task_id"]: trace for trace in policy_traces}
+        for policy, policy_traces in ledger.get("traces", {}).items()
+    }
+    for policy, policy_records in records.items():
+        for record in policy_records:
+            if record.get("judged_by") == "llm":
+                continue
+            task = tasks_by_id.get(record["task_id"], {})
+            trace = traces_by_policy.get(policy, {}).get(record["task_id"])
+            if not task or not trace:
+                continue
+            answer = final_answer(trace)
+            if not answer:
+                record.update({"passed": False, "reason": "no answer produced",
+                               "judge_failed": False, "judged_by": "none"})
+                continue
+            result = verify_answer(task, answer)
+            if result["status"] == STATUS_NEEDS_JUDGE:
+                continue
+            record.update({
+                "passed": result["status"] == "passed",
+                "reason": result["reason"],
+                "judge_failed": False,
+                "judged_by": "verifier",
+                "verification_type": result["type"],
+            })
     return records
 
 
@@ -177,22 +242,24 @@ def render_markdown(ledger: Dict[str, Any], judged: Dict[str, Any]) -> str:
         f"> Judge: `{meta['judge_model']}` | sample: {meta['task_count']} tasks",
         f"> {meta.get('judge_cost_note', '')}",
         "",
-        "| Policy | Tasks | Judged | Judge failures | Judged success | CPST (serving) | CPST (incl. judge) | Failed spend | Judge cost |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| Policy | Tasks | Judged | Judge failures | Verified | LLM judged | Judged success | CPST (serving) | CPST (incl. judge) | Failed spend | Judge cost |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for policy_name, summary in judged["policies"].items():
         lines.append(
             f"| {policy_name} | {summary['tasks']} | {summary['judged']} | "
-            f"{summary['judge_failures']} | {summary['success_rate']:.2%} | "
+            f"{summary['judge_failures']} | {summary['verified_by_verifier']} | "
+            f"{summary['judged_by_llm']} | {summary['success_rate']:.2%} | "
             f"${summary['cpst_usd']:.6f} | "
             f"${summary['all_in_cpst_usd']:.6f} | "
             f"${summary['failed_cost_usd']:.6f} | ${summary['judge_cost_usd']:.6f} |"
         )
     lines += [
         "",
-        "> Judged success comes from a strict rubric-based judge, not HTTP success. "
-        "Judge failures are judge-side infrastructure errors (timeout / rate limit), "
-        "not quality verdicts, so they are excluded from the success denominator.",
+        "> Judged success comes from the task's deterministic verifier when one "
+        "exists, otherwise from a strict rubric-based LLM judge. Judge failures "
+        "are judge-side infrastructure errors (timeout / rate limit), not quality "
+        "verdicts, so they are excluded from the success denominator.",
         "",
     ]
     return "\n".join(lines)
@@ -220,12 +287,16 @@ def main() -> None:
     parser.add_argument("--sweep-only", action="store_true",
                         help="reuse verdicts already stored in the ledger and "
                              "only rebuild the threshold sweep (no judge calls)")
+    parser.add_argument("--regrade-verifiers", action="store_true",
+                        help="reuse stored LLM verdicts but re-run deterministic "
+                             "verifiers on recorded answers (no judge calls)")
     args = parser.parse_args()
 
-    # A sweep must never write into another ledger's judged file: it rewrites
-    # the file it was given unless the caller named an explicit output.
+    # A reuse pass must never write into another ledger's judged file: it
+    # rewrites the file it was given unless the caller named an explicit output.
     args.out, args.md_out = resolve_sweep_outputs(
-        args.ledger, args.out, args.md_out, args.sweep_only
+        args.ledger, args.out, args.md_out,
+        args.sweep_only or args.regrade_verifiers,
     )
 
     with open(args.ledger, "r", encoding="utf-8") as handle:
@@ -234,21 +305,24 @@ def main() -> None:
         raise RuntimeError("judge_ledger.py only accepts a REAL ledger")
 
     tasks = load_tasks(args.tasks)
-    task_prompts = {task["task_id"]: task["prompt"] for task in tasks}
+    tasks_by_id = {task["task_id"]: task for task in tasks}
     pricing_path = args.pricing or ledger["_meta"].get("pricing_file",
                                                        "cascade/configs/pricing.yaml")
     pricing = load_pricing(
         pricing_path if os.path.isabs(pricing_path)
         else os.path.join(REPO_ROOT, pricing_path)
     )
-    if args.sweep_only:
+    if args.sweep_only or args.regrade_verifiers:
         # Reuse verdicts already stored in a judged ledger: no judge calls.
         existing = ledger.get("judged") or {}
         if not existing.get("records"):
             raise RuntimeError(
-                "--sweep-only needs a ledger that already contains judged records."
+                "--sweep-only / --regrade-verifiers need a ledger that already "
+                "contains judged records."
             )
         records = existing["records"]
+        if args.regrade_verifiers:
+            records = regrade_verifier_records(ledger, records, tasks_by_id)
         judge_model = existing.get("_meta", {}).get("judge_model", "unknown")
         policies = {
             name: summarize_judged(recs) for name, recs in records.items()
@@ -263,7 +337,7 @@ def main() -> None:
         for policy_name, traces in ledger["traces"].items():
             print(f"[{policy_name}] judging {len(traces)} answers", flush=True)
             policy_records = judged_records_for_policy(
-                traces, task_prompts, backend, pricing, args.sleep,
+                traces, tasks_by_id, backend, pricing, args.sleep,
             )
             records[policy_name] = policy_records
             policies[policy_name] = summarize_judged(policy_records)
@@ -272,8 +346,10 @@ def main() -> None:
         "_meta": {
             "mode": "judged",
             "note": (
-                "Answers are judged offline with a strict rubric; routing was "
-                "already decided, so the judge never affects online behaviour."
+                "Answers are graded by the task's deterministic verifier when "
+                "one exists; the LLM judge is only a fallback for open-ended "
+                "tasks. Routing was already decided, so grading never affects "
+                "online behaviour."
             ),
             "judge_model": judge_model,
             "judge_cost_note": (

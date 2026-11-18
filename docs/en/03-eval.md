@@ -175,6 +175,14 @@ python3 cascade/src/real_eval.py --limit 50 --max-tokens 1024 --threshold 0.85 \
     --small-system-prompt "Be brief: answer in at most 120 words. Do not restate the question or add preamble." \
     --pricing cascade/configs/pricing.qwen.yaml \
     --out data/eval/real_ledger_brief.json --md-out data/eval/real_ledger_brief.md
+# Verifier-first gate: accept on deterministic-check pass, escalate on fail,
+# fall back to confidence when no verifier exists; live results are in 8.14.
+python3 cascade/src/real_eval.py --limit 50 --max-tokens 1024 --threshold 0.85 \
+    --small-model qwen-plus --frontier-model qwen-max \
+    --small-system-prompt "Be brief: answer in at most 120 words. Do not restate the question or add preamble." \
+    --pricing cascade/configs/pricing.qwen.yaml --escalation-mode verifier_first \
+    --sleep 3 --timeout 120 \
+    --out data/eval/real_ledger_plus_v3.json --md-out data/eval/real_ledger_plus_v3.md
 # Bailian qwen-flash at official list prices; every other setting is unchanged
 python3 cascade/src/real_eval.py --limit 50 --max-tokens 1024 --threshold 0.85 \
     --small-model qwen-flash --frontier-model qwen-max \
@@ -273,7 +281,7 @@ Same 50 task IDs, brevity instruction, threshold 0.85 and `max_tokens=1024`; onl
 
 Small-model spend falls 46.2%, but the higher escalation rate makes the threshold-0.85 cascade bill larger. Neither the 50 small-model nor the 50 frontier responses is empty or truncated by the output budget. Frontier answers are regenerated too, so each run uses its own frontier control; token or verdict differences between runs cannot all be attributed to the small model.
 
-The non-Qwen DeepSeek judge completed all 150 verdicts with `judge_failed=0`. Judged quality and offline economics compare as follows:
+The external non-Qwen judge completed all 150 verdicts with `judge_failed=0`. Judged quality and offline economics compare as follows:
 
 | Judged / economics metric | plus-brief | flash-brief |
 |---|---|---|
@@ -292,17 +300,122 @@ The sweep replays routing with the independently sampled `all_small` answers, so
 
 1. ~~Compress small-model output~~: verified in 8.8; the qwen-plus cascade flipped to a narrow win.
 2. ~~Shrink the small-model price~~: measured with official Bailian qwen-flash list prices in 8.9. The small-model bill fell, but the quality loss removed every cheaper matched-success operating point.
-3. **Rebuild the task mix**: split the 17 missing-input tasks out as should-refuse, add tasks only the small model can handle, and expand the sample to recheck the narrow 7.0% plus-brief win. The avoidable share changes with tasks and model quality; do not reuse the baseline's 30.5%.
+3. **Rebuild the task mix**: the infrastructure is in place (8.11); the real expanded run still waits for budget confirmation. The avoidable share changes with tasks and model quality; do not reuse the baseline's 30.5%.
 4. **Only then change the signal** (semantic entropy, self-consistency, P(True), a RouteLLM-style trained router): recompute the ideal bound for the chosen model (47.3% for plus-brief, 16.7% for flash-brief), then measure how much can be realised.
 5. The non-Qwen judge is in place and should be kept.
 
+### 8.11 Task-mix rebuild and deterministic verifiers (zero API)
+
+Groundwork for item 3, with no model calls:
+
+- **Contract extension**: `task` gains optional `task_class` (`should_refuse | small_sufficient | frontier_required`) and `verification`. Older task files stay valid and fall back to the previous behaviour.
+- **New task flow**: 100 tasks = 20 should-refuse / 50 small-sufficient / 30 frontier-required, while difficulty stays 50/30/20 (simple/medium/complex) so the mock ledger remains comparable.
+- **Deterministic verifier**: `cascade/src/verifier.py` supports `exact_match`, `field_match`, `regex`, `json_schema` and `refusal`, returning `passed / failed / needs_judge`. Numeric matches use digit boundaries (`3072` does not match `13072`); text matches normalise width, case and whitespace.
+- **Refusal grading**: `refusal` requires an explicit statement of which input is missing and rejects the fabrication patterns attached to the template (concrete temperatures, dates, percentages). This is a reproducible operational rule, not a full semantic judgement.
+- **Grading integration**: `judge_ledger.py` now tries the verifier first and only falls back to the LLM judge on `needs_judge`; records carry `judged_by` and `verification_type`, and judge cost only covers real LLM fallbacks.
+- **Regrade mode**: `judge_ledger.py --regrade-verifiers` reuses stored LLM verdicts and re-runs only the deterministic verifiers, with no API calls, so verifier-rule changes can be reapplied reproducibly.
+- **Stratified sampling**: `real_eval.py` stratifies by `task_class` first, preserving the 20/50/30 ratio; older tasks without `task_class` still stratify by `kind`.
+
+Verification (zero API): `178 passed`; `node cascade/tests/verify_web_metrics.js` passes; the rebuilt mock ledger shows the cascade saving 47.84% at 99% success versus 97% for all-frontier (still MOCK numbers).
+
+Boundary: no real API was called and no new real ledger was produced. The old real ledgers were generated against the previous task content, which this rebuild replaced; they must not be re-judged against the new `seed_tasks.jsonl`. See 8.12 for the new-mix real check.
+
 > Historical reference: 20 even-spaced tasks, threshold 0.66, qwen-max judge (same family) gave 48.03% serving savings and 0% escalation; judged success was frontier 71.4% / cascade 95.0% / small 95.0%. That round had the truncation and fabrication-reward defects from 8.4, so the numbers are a process record, not a conclusion.
+
+### 8.12 New-mix real check: no matched-success saving after fixing refusal false negatives
+
+Using the 20/50/30 flow from 8.11, we sampled 50 tasks by `task_class` (10 refusal / 25 small-sufficient / 15 frontier-required) with `max_tokens=1024`, threshold 0.85 and official prices. Serving ran all three policies; grading used deterministic verifiers on 35 tasks and an external non-Qwen judge on 15 (45 fallbacks per run = 15 tasks × 3 policies, 70% fewer than full judging). Artifacts: `data/eval/real_ledger_{plus,flash}_v2*`.
+
+| Policy | Judged success | Serving CPST | Serving cost | Escalation | CPST incl. judge |
+|---|---|---|---|---|---|
+| plus all-frontier | 90% | $0.000279 | $0.015219 | 0% | $0.000662 |
+| plus cascade | 80% | $0.000098 | $0.005153 | 12% | $0.000675 |
+| plus all-small | 82% | $0.000024 | $0.001461 | 0% | $0.000401 |
+| flash all-frontier | 96% | $0.000293 | $0.015796 | 0% | $0.000785 |
+| flash cascade | 84% | $0.000135 | $0.008107 | 28% | $0.000515 |
+| flash all-small | 76% | $0.000012 | $0.000665 | 0% | $0.000592 |
+
+Passed / total by task class:
+
+| Task class (n) | plus frontier | plus cascade | plus small | flash frontier | flash cascade | flash small |
+|---|---|---|---|---|---|---|
+| Should refuse (10) | 7 | 6 | 5 | 10 | 6 | 1 |
+| Small sufficient (25) | 25 | 25 | 25 | 25 | 24 | 24 |
+| Frontier required (15) | 13 | 9 | 11 | 13 | 12 | 13 |
+
+**A grading defect was fixed first.** The initial refusal phrase list only covered fixed phrasings such as "not provided" and "missing", and marked valid refusals like "the content was not directly provided", "no concrete details" or "I need to see ... could you provide it" as failures. After the fix, frontier success on the same answers rose from 82% to 90% (plus) and 86% to 96% (flash), and the refusal class rose from 4-5/10 to 7-10/10. `--regrade-verifiers` reproduces this re-grade without new API calls. Keyword-based refusal verification is highly phrasing-sensitive; template-level paraphrase coverage and human spot checks are mandatory.
+
+**No matched-success saving was measured.** plus: frontier 90% / $0.000279, cascade 80% / $0.000098, small 82% / $0.000024. Cascade serving CPST is 65% lower, but per-request success is 10 pp lower, and cascade is both below all-small and about 3.5x its total cost, so confidence-based escalation added no value for plus in this run. flash: frontier 96% / $0.000293, cascade 84% / $0.000135, small 76% / $0.000012; cascade is 8 pp above all-small and 54% cheaper per success than frontier, but still 12 pp below frontier. Escalation helps flash, but not enough to close the gap.
+
+**The threshold sweep is an upper-bound hypothesis.** Replaying all-small records plus all-frontier records gives 90% at 0.85 for plus (CPST $0.000127) and 92% at 0.85 for flash ($0.000212); the actual cascades reached only 80% and 84%. For plus, the cascade's own small answers differ from all-small on 7/50 tasks, and one of six escalated tasks fell back to the small answer after frontier failed; the replay models neither effect. The 0.85-0.90 "matched" points are therefore not realised results. Judge cost is offline evaluation overhead: $0.0172-0.0231 per plus policy and $0.0160-0.0236 per flash policy, above serving cost; with judge cost included, plus cascade is already slightly more expensive than frontier. It must not be added to online CPST.
+
+**Conclusion and next step**: the verifier fix raised the frontier ceiling from 82% to 90%/96%, so the old-mix result (plus 7.0% cheaper, flash 5.0% more expensive at matched success) no longer holds. What remains is a trade-off: 10-12 pp lower success for 54-65% lower serving CPST. F2.5 stays in progress. Next: repeat each policy three times or extend to at least 150 tasks and report mean and range; make the threshold replay use the cascade's own small answers and model fallback; routing-signal comparison is in 8.13.
+
+### 8.13 Routing signals: a verifier gate beats mean token probability (offline replay)
+
+We replayed the two recorded ledgers from 8.12 through five signal families (`cascade/src/router_signals.py`, **zero model calls**). Each signal is reduced to its cheapest point at "success >= all-frontier"; the table below uses the fixed 0.85 threshold so nothing is tuned on the same data.
+
+| Signal | plus success / total / CPST / escalation | flash success / total / CPST / escalation |
+|---|---|---|
+| all-frontier (baseline) | 90% / $0.015219 / $0.000279 / 0% | 96% / $0.015796 / $0.000293 / 0% |
+| mean token probability (today) | 90% / $0.006031 / $0.000127 / 14% | 92% / $0.011560 / $0.000212 / 36% |
+| **verifier gate** | **94% / $0.006760 / $0.000124 / 18%** | **96% / $0.011665 / $0.000206 / 40%** |
+| **refusal gate (no gold)** | **94% / $0.006760 / $0.000124 / 18%** | **96% / $0.011665 / $0.000206 / 40%** |
+| answer length / prompt length | never reaches 90% | reaches 96% only by escalating 100% |
+| task-class oracle (metadata) | 86% / $0.012234 / $0.000240 / 0% | 76% / $0.012210 / $0.000272 / 0% |
+| keyword router (AUC 0.935) | 90%, but needs 92% of tasks on frontier, cost ~ frontier | 96%, also needs 92% on frontier |
+| oracle (perfect router) | 96% / $0.005776 | 98% / $0.004622 |
+
+Rule: run the small model on verifiable tasks, accept a verifier pass and escalate a fail; fall back to the 0.85 confidence gate when no verifier exists. By task class (verifier gate, 0.85):
+
+| Task class (n) | plus passed / cost | flash passed / cost |
+|---|---|---|
+| Should refuse (10) | 8/10 / $0.002578 | 10/10 / $0.003262 |
+| Small sufficient (25) | 25/25 / $0.000199 | 25/25 / $0.000072 |
+| Frontier required (15) | 14/15 / $0.003983 | 13/15 / $0.008331 |
+
+Four findings:
+
+1. **The verifier gate reaches or beats frontier success on both models**: plus 94% (frontier 90%), flash 96% (frontier 96%), with total cost 55.6% / 26.2% lower and CPST falling by the same ratio. The gain comes from the refusal class: when the small model fails to flag missing input, the refusal verifier turns that failure into one escalation. Frontier itself fails some refusal tasks (plus 7/10), so the gate can even exceed all-frontier.
+2. **The gain does not depend on gold answers.** `exact_match/field_match` compare against the task's stored expected value, so they represent "every task ships a cheap checker". Restricting the gate to the refusal check (which needs no gold) and falling back to confidence for everything else produces **identical** numbers at the pre-registered 0.85 threshold: plus small-sufficient tasks were already 25/25, and flash's only small-sufficient failure (a reversed word) had confidence 0.84 and would be escalated anyway. The gold verifier only adds value at the tuned 0.5 point, and that advantage rests on one task.
+3. **Knowing the task class is not routing.** Sending every `frontier_required` task straight to frontier yields only 86%/76% success, because refusal tasks left on the small model still fail. A keyword router with AUC 0.935 must still send 92% of tasks to frontier to reach matched success, at which point cost collapses to all-frontier. **AUC is not savings; the question is how many frontier calls a point needs at matched success.**
+4. **Free signals (answer length, prompt length) have no filtering power**: plus never reaches 90% at any threshold, and flash only reaches 96% by escalating everything.
+
+**Scope**: every number here is an offline replay over all-small answers, not a live cascade. Section 8.12 showed replay can differ from the live cascade by 8-10 pp (7/50 different small answers, and frontier-failure fallback is not modelled). This section therefore selects a signal; it does not report realised savings. See 8.14 for the live verifier-first run.
+
+### 8.14 Verifier-first live run: better than the confidence gate, still below frontier (2026-11-18)
+
+We implemented `--escalation-mode verifier_first` (`engine.py::_verifier_decision`): run the small model first, accept a deterministic-verifier pass, escalate a verifier failure, and fall back to the 0.85 confidence gate when the task has no verifier. Small-model HTTP failure still escalates via fallback. The run used exactly the v2 conditions (50 stratified tasks, qwen-plus brief ≤120 words → qwen-max, `max_tokens=1024`, threshold 0.85, `pricing.qwen.yaml`, the same external non-Qwen judge). Artifacts: `data/eval/real_ledger_plus_v3{,_judged}.{json,md}`; zero judge failures (105 verifier + 45 LLM verdicts).
+
+| Policy | Judged success | Total cost | CPST (serving) | CPST (incl. judge) | Escalation |
+|---|---|---|---|---|---|
+| `all_frontier` | 48/50 = **96%** | $0.015675 | $0.000292 | $0.000991 | 0% |
+| `cascade` (verifier gate) | 43/50 = **86%** | $0.005587 | $0.000087 | $0.000695 | 16% |
+| `all_small` | 40/50 = **80%** | $0.001470 | $0.000023 | $0.000509 | 0% |
+
+Cascade passes by class: should-refuse 9/10, small-sufficient 25/25, frontier-required 9/15. Frontier failed only two tasks this round (0039, 0081, both frontier-required).
+
+**Comparison with the confidence gate (v2), with a cross-run noise warning**: v2 was frontier 90% / cascade 80% / all-small 82% in its own round; this round is 96% / 86% / 80%. Only 24/50 all-frontier answers are identical across the two rounds (sampling drift), so "80% → 86%" cannot be credited to the gate alone. The more meaningful same-round contrast is the **inversion of cascade versus all-small**: in v2 cascade (80%) sat below all-small (82%), i.e. routing destroyed value; in v3 cascade (86%) sits above all-small (80%), i.e. routing now adds value.
+
+**Three measured findings**:
+
+1. **Escalation decisions on verifiable tasks reproduced the replay exactly.** The five should-refuse tasks (0013/0016/0030/0041/0065) escalated on refusal-verifier failure, matching 8.13 task for task; all 25 small-sufficient tasks passed the verifier with zero escalations. Should-refuse rose from 6/10 (v2) to 9/10. This is the gate's most stable gain.
+2. **The remaining gap is entirely in unverifiable tasks, and it shows up as high-confidence errors.** Of the 42 non-escalated tasks, five failed — all frontier-required, with confidences 0.92 / 0.88 / 0.88 / 0.88 / 0.87, every one above the 0.85 threshold yet genuinely wrong (a mis-computed valuation sensitivity, a misunderstood `cache.setdefault` semantic, invented figures the prompt never supplied). Mean token probability is **systematically blind** to these failures, which is why the replay's "frontier_required 14/15" did not reproduce live.
+3. **"Escalated = frontier quality" does not hold.** Two of the eight escalated tasks still failed: after escalation, 0041's frontier answer again invented input, and 0006's frontier answer was judged "a generic framework with no executable steps". The cascade's frontier call and all-frontier's call are independent samples, so escalation does not guarantee this round's 96%.
+
+**Cost accounting**: cascade total cost is 35.6% of frontier (64.4% saved) and serving CPST is 70% lower, but success is 10 pp lower — **still not a matched-success saving**. Including judge cost, cascade $0.000695 remains below frontier $0.000991 (30% lower). The judge bill ($0.026) is over 4x the cascade's own serving cost ($0.0056), which again argues for wider deterministic-verifier coverage.
+
+**Next**: F2.5 stays in progress. Two options — (a) test a strict variant that escalates every unverifiable task (estimated ~$0.009, 60% of frontier) to see whether success passes 92%; (b) repeat this configuration three times to quantify cross-run noise before judging whether the gate's gain is significant.
 
 ## 9. Known limits
 
 - Mock `success` is a probability event, not a quality label; a real evaluation needs task-level rubrics or human annotation.
 - Confidence is a rule plus stable jitter (mock) or mean token probability (real); the 50-task run shows mean token probability has no routing power, so the signal must be replaced before production.
+- The verifier gate and keyword router in 8.13 are offline replays over all-small answers. Section 8.14 runs the verifier gate live, but its single run remains 10 pp below frontier and replay can differ from a live cascade by 8-10 pp. A high AUC is not savings: the keyword router scores AUC 0.935 yet still needs 92% frontier calls at matched success.
+- Refusal verification only checks "states the input is missing and does not fabricate"; it is not full semantic refusal grading. `exact_match/field_match` rely on stored expected answers, so production needs an equivalent tool check or recomputation.
 - Small-model output length dominates real cost; the real evaluation now fixes `max_tokens=1024`, and any policy comparison must fix the output budget.
 - Mock uses illustrative prices; every real ledger binds its model-specific official Bailian rates and FX through `pricing_file`, which must be checked before cross-run comparisons.
-- 50 real tasks are still a small sample: complex has only 10 tasks and 34% of tasks lack required input. The negative baseline, narrow plus-brief win and negative flash-brief result all need larger-sample confirmation.
+- The new 50-task sample is still a single small run (10 refusal / 25 small-sufficient / 15 frontier-required); one task moves success by 2 pp, and the same frontier model passed 7/10 versus 10/10 refusal tasks in two runs. Repeat before drawing conclusions.
+- Keyword refusal verification is phrasing-sensitive: adding paraphrases raised frontier success by 8-10 pp, so the grading rule itself changes the measured ceiling. Keep template-level positive and negative cases plus human spot checks.
+- The threshold sweep replays all-small answers and does not model cascade answer drift or frontier-failure fallback; it is a tool for choosing a threshold, not evidence of a realised matched-success point.
 - The judge has its own bias and cost, which can far exceed serving spend (especially for flash all-small); report `CPST (incl. judge)` separately from serving CPST and count judge-side failures separately.

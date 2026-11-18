@@ -24,7 +24,7 @@ Four objects, all strict JSON (UTF-8, fixed keys, no extra fields):
 
 | Object | Purpose | Key fields |
 |---|---|---|
-| `task` | input unit of work | `task_id`, `kind`, `prompt`, `expected_difficulty`, `tags`, `created_at` |
+| `task` | input unit of work | `task_id`, `kind`, `prompt`, `expected_difficulty`, `tags`, `created_at`, optional `task_class` / `verification` |
 | `route_decision` | routing decision for one attempt | `policy`, `selected_model`, `confidence`, `escalated`, `reason` |
 | `model_response` | model output | `model`, `content`, `success`, `latency_ms`, `usage`, optional `confidence` |
 | `cost_record` | task-level ledger row | `model`, `attempts`, `cost_usd`, `latency_ms`, `success`, `cost_per_successful_task_usd` |
@@ -33,6 +33,8 @@ Enums:
 
 - `kind`: `simple | medium | complex`
 - `expected_difficulty`: `low | medium | high`
+- `task_class`: `should_refuse | small_sufficient | frontier_required`
+- `verification.type`: `exact_match | field_match | regex | json_schema | refusal | llm_judge`
 - `policy`: `all_frontier | cascade | all_small`
 - `selected_model` / `model`: `small | frontier`
 
@@ -46,13 +48,15 @@ Implementation: [`cascade/src/schema.py`](../../cascade/src/schema.py). Export s
 
 ## 3. Synthetic task flow
 
-`gen_tasks.py` generates 100 tasks from fixed templates and a fixed seed:
+`gen_tasks.py` generates 100 tasks from fixed templates and a fixed seed. It allocates by `task_class` first, then by difficulty inside each class:
 
-- 50 `simple` (weather, email triage, calendar confirmation);
-- 30 `medium`;
-- 20 `complex` (cross-platform price comparison, long-horizon research).
+- **`should_refuse`, 20 tasks**: live data, attachments or access are missing; the correct behaviour is to say what is missing instead of inventing it;
+- **`small_sufficient`, 50 tasks**: each has a deterministic verifier (exact value, fields, regex or JSON);
+- **`frontier_required`, 30 tasks**: open-ended analysis and design, graded by a rubric or an LLM judge.
 
-> The initial spec suggested an approximately 80/20 simple/complex split; the implementation uses **50/30/20** so mid-difficulty threshold behaviour is observable. This deviation is recorded at implementation time. The panel exposes traffic-mix weights so the conclusion can be extrapolated.
+Difficulty stays at **50/30/20** (simple/medium/complex) so the mock ledger remains comparable with earlier runs. Every task carries a `verification` spec; offline grading uses the deterministic verifier first and only calls the judge for `llm_judge` tasks.
+
+> This rebuild replaces task content but keeps the `task_id` numbering scheme. Real ledgers produced before 2026-11-11 used the previous task file; re-judging them requires their original source and must not reuse the new `seed_tasks.jsonl`.
 
 Two runs produce byte-identical output; all 100 `task_id`s and prompts are unique. Output: `data/synthetic/seed_tasks.jsonl`.
 

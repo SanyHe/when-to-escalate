@@ -64,6 +64,36 @@ def test_valid_objects_pass():
     assert validate_cost_record(RECORD)
 
 
+def test_task_accepts_optional_class_and_verification():
+    verified = copy.deepcopy(TASK)
+    verified["task_class"] = "small_sufficient"
+    verified["verification"] = {"type": "exact_match", "expected": "3072"}
+    assert validate_task(verified)
+
+    refusing = copy.deepcopy(TASK)
+    refusing["task_class"] = "should_refuse"
+    refusing["verification"] = {
+        "type": "refusal",
+        "missing_inputs": ["天气数据"],
+        "forbidden_patterns": [r"\d{1,2}\s*度"],
+    }
+    assert validate_task(refusing)
+
+
+def test_task_rejects_bad_task_class_and_verification():
+    bad_class = copy.deepcopy(TASK)
+    bad_class["task_class"] = "maybe"
+    assert not validate_task(bad_class)
+
+    bad_type = copy.deepcopy(TASK)
+    bad_type["verification"] = {"type": "vibes"}
+    assert not validate_task(bad_type)
+
+    extra_key = copy.deepcopy(TASK)
+    extra_key["verification"] = {"type": "regex", "pattern": "x", "surprise": 1}
+    assert not validate_task(extra_key)
+
+
 def test_task_rejects_missing_and_extra_fields():
     missing = copy.deepcopy(TASK)
     del missing["tags"]

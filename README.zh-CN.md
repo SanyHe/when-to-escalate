@@ -33,7 +33,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    gen[gen_tasks.py<br/>固定种子] --> seeds[data/synthetic/seed_tasks.jsonl<br/>100 条 · 50/30/20]
+    gen[gen_tasks.py<br/>固定种子] --> seeds[data/synthetic/seed_tasks.jsonl<br/>100 条 · 应拒答/够用/旗舰 20/50/30]
     seeds --> replay[replay.py<br/>确定性 mock 后端]
     replay --> mock[data/eval/mock_ledger.json<br/>三策略 · CPST · 节省比例]
     replay --> webdata[web/data/ledger.json]
@@ -246,7 +246,7 @@ private/          本地 harness 状态与内部规格（gitignore，不发布�
 |---|---|---|
 | M1 账本与路由纯函数 | 已验证 | 100 条 mock 任务账本，成本/CPST 单测 |
 | M2 引擎与服务化 | 本地已验证 | 引擎、fallback、网关均用进程内 fake/mock 后端测试 |
-| F2.5 真实后端评测 | **已评测，结论依赖模型** | 50 条分层任务，百炼 qwen-plus/qwen-flash → qwen-max，非同源裁判。qwen-plus 基线亏 8.6%，加“≤120 词”指令后同等 80% 成功率下**便宜 7.0%**。按官方价换用 qwen-flash 后 `S/F` 降至 0.050，但小模型成功率 44%→10%、可省份额降至 0.218；唯一同等 80% 成功率的点是 100% 升级，$0.019817，比全旗舰**贵 5.0%**。仍需扩样复核 |
+| F2.5 真实后端评测 | **verifier-first 已实测；仍未追平旗舰** | 在 50 条分层任务（应拒答 10 / 小模型够用 25 / 必须旗舰 15）上，真实 verifier-first qwen-plus → qwen-max cascade 通过 43/50（86%），高于同轮 all_small 的 80%，但低于全旗舰的 96%。总成本 $0.005587 vs $0.015675（低 64.4%），服务 CPST 低 70%，但这不是同成功率省钱。可判定任务的升级决策复现了离线回放；剩余差距来自不可判定的必须旗舰任务上的 5 个高置信度错误，且 8 个升级任务仍有 2 个失败。F2.5 保持 in_progress；详见 `docs/03-eval.md` 8.14。 |
 | M3 面板 | 本地已验证 | 浏览器检查策略切换、实时重算、双语与在线模式 |
 | F3.5 公开部署 | 待完成 | 已提供 `deploy.yml`；线上 Pages URL 需要仓库/Pages 权限 |
 

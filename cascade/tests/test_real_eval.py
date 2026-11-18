@@ -67,6 +67,22 @@ def test_sample_tasks_small_limit_keeps_every_tier():
     assert kinds.count("complex") == 1
 
 
+def test_sample_tasks_stratifies_by_task_class_when_present():
+    tasks = (
+        [{"task_id": f"r{i}", "task_class": "should_refuse"} for i in range(20)]
+        + [{"task_id": f"s{i}", "task_class": "small_sufficient"} for i in range(50)]
+        + [{"task_id": f"f{i}", "task_class": "frontier_required"} for i in range(30)]
+    )
+
+    picked = sample_tasks(tasks, 50)
+
+    classes = [task["task_class"] for task in picked]
+    assert len(picked) == 50
+    assert classes.count("should_refuse") == 10
+    assert classes.count("small_sufficient") == 25
+    assert classes.count("frontier_required") == 15
+
+
 def test_build_backends_applies_explicit_model_names(monkeypatch):
     monkeypatch.delenv("CASCADE_SMALL_BASE_URL", raising=False)
     monkeypatch.setenv("DASHSCOPE_API_KEY", "test-key")

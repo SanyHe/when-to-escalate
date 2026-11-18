@@ -50,12 +50,14 @@ A feature is done when all of the following are true:
 | Judge a real ledger offline | `CASCADE_JUDGE_MODEL=<judge-model> CASCADE_JUDGE_LABEL=external-non-qwen-judge python3 cascade/src/judge_ledger.py --ledger data/eval/real_ledger.json` |
 | Rebuild the threshold sweep only (no API calls) | `python3 cascade/src/judge_ledger.py --ledger data/eval/real_ledger_judged.json --sweep-only` |
 | Learned-router ceiling check (no API calls) | `python3 cascade/src/router_ceiling.py` |
+| Routing-signal comparison (no API calls) | `python3 cascade/src/router_signals.py` |
 | Break-even inequality + lever scenarios (no API calls) | `python3 cascade/src/economics.py` |
 | Serve the gateway (needs backends) | `uvicorn cascade.src.gateway:app --port 8000` |
 | Preview the static panel | `python3 -m http.server 8765 --directory web` |
 
 Key paths:
 - Schemas & validation: [`cascade/src/schema.py`](./cascade/src/schema.py)
+- Deterministic verifier: [`cascade/src/verifier.py`](./cascade/src/verifier.py)
 - Pricing & cost functions: [`cascade/src/pricing.py`](./cascade/src/pricing.py)
 - Rule router: [`cascade/src/router.py`](./cascade/src/router.py)
 - Cascade engine: [`cascade/src/engine.py`](./cascade/src/engine.py)

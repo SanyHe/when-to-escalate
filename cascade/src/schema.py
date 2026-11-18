@@ -33,7 +33,85 @@ DIFFICULTIES = ("low", "medium", "high")
 POLICIES = ("all_frontier", "cascade", "all_small")
 MODELS = ("small", "frontier")
 
+# Task classes describe what a correct answer requires, which is a different
+# axis from the difficulty ``kind``:
+#   should_refuse      the prompt lacks required input; inventing it is wrong
+#   small_sufficient   a small model can solve it and a deterministic check exists
+#   frontier_required  open-ended quality work; needs a rubric or an LLM judge
+TASK_CLASSES = ("should_refuse", "small_sufficient", "frontier_required")
+
+# Deterministic verification types. ``llm_judge`` is the explicit fallback and
+# is the only type that spends judge tokens.
+VERIFICATION_TYPES = (
+    "exact_match",
+    "field_match",
+    "regex",
+    "json_schema",
+    "refusal",
+    "llm_judge",
+)
+
 _ISO8601_PATTERN = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"
+
+
+# ---------------------------------------------------------------------------
+# Verification spec (optional part of a task)
+# ---------------------------------------------------------------------------
+
+VERIFICATION_SCHEMA: Dict[str, Any] = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Verification",
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["type"],
+    "properties": {
+        "type": {"type": "string", "enum": list(VERIFICATION_TYPES)},
+        # exact_match: one expected value, or any of several accepted values.
+        "expected": {"type": "string", "minLength": 1},
+        "any_of": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "minItems": 1,
+        },
+        # regex: a single pattern that must be present in the answer.
+        "pattern": {"type": "string", "minLength": 1},
+        # field_match: every named pattern must be present.
+        "fields": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["name", "pattern"],
+                "properties": {
+                    "name": {"type": "string", "minLength": 1},
+                    "pattern": {"type": "string", "minLength": 1},
+                },
+            },
+        },
+        # json_schema: an answer-level JSON object with required keys.
+        "required_keys": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "minItems": 1,
+        },
+        "key_values": {
+            "type": "object",
+            "additionalProperties": {"type": ["string", "number", "boolean"]},
+        },
+        # refusal: the answer must say input is missing, without inventing it.
+        "forbidden_patterns": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+        },
+        "missing_inputs": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+        },
+        # llm_judge: optional rubric hint for the offline judge.
+        "rubric": {"type": "string"},
+    },
+}
 
 
 # ---------------------------------------------------------------------------
@@ -60,6 +138,9 @@ TASK_SCHEMA: Dict[str, Any] = {
         "expected_difficulty": {"type": "string", "enum": list(DIFFICULTIES)},
         "tags": {"type": "array", "items": {"type": "string", "minLength": 1}},
         "created_at": {"type": "string", "pattern": _ISO8601_PATTERN},
+        # Optional so that older task files and ledgers stay valid.
+        "task_class": {"type": "string", "enum": list(TASK_CLASSES)},
+        "verification": VERIFICATION_SCHEMA,
     },
 }
 
@@ -275,6 +356,7 @@ VALIDATORS = {
 
 SCHEMAS = {
     "task": TASK_SCHEMA,
+    "verification": VERIFICATION_SCHEMA,
     "route_decision": ROUTE_DECISION_SCHEMA,
     "model_response": MODEL_RESPONSE_SCHEMA,
     "cost_record": COST_RECORD_SCHEMA,

@@ -45,39 +45,46 @@ POLICIES = ("all_frontier", "cascade", "all_small")
 
 
 def sample_tasks(tasks: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
-    """Pick ``limit`` tasks, stratified by ``kind`` when the field exists.
+    """Pick ``limit`` tasks, stratified by ``task_class`` (or ``kind``).
 
-    Proportional allocation (largest remainder) keeps every difficulty tier
-    represented at small sample sizes; within each tier tasks are evenly
-    spaced so the sample still spans the whole flow. Tasks without ``kind``
-    fall back to plain even spacing.
+    Proportional allocation (largest remainder) keeps every class represented
+    at small sample sizes; within each stratum tasks are evenly spaced so the
+    sample still spans the whole flow. Tasks without ``task_class`` keep the
+    older behaviour and stratify by ``kind``; tasks with neither fall back to
+    plain even spacing.
     """
     if limit <= 0:
         raise ValueError("limit must be positive")
     if limit >= len(tasks):
         return list(tasks)
-    if any("kind" not in task for task in tasks):
+    if all("task_class" in task for task in tasks):
+        stratum_key = "task_class"
+        order = ("should_refuse", "small_sufficient", "frontier_required")
+    elif all("kind" in task for task in tasks):
+        stratum_key = "kind"
+        order = ("simple", "medium", "complex")
+    else:
         step = len(tasks) / float(limit)
         return [tasks[int(index * step)] for index in range(limit)]
 
     groups: Dict[str, List[Dict[str, Any]]] = {}
     for task in tasks:
-        groups.setdefault(task["kind"], []).append(task)
-    # Largest-remainder proportional allocation across tiers.
-    quotas = {kind: len(group) * limit / len(tasks) for kind, group in groups.items()}
-    counts = {kind: int(quota) for kind, quota in quotas.items()}
+        groups.setdefault(task[stratum_key], []).append(task)
+    # Largest-remainder proportional allocation across strata.
+    quotas = {key: len(group) * limit / len(tasks) for key, group in groups.items()}
+    counts = {key: int(quota) for key, quota in quotas.items()}
     remaining = limit - sum(counts.values())
-    for kind in sorted(quotas, key=lambda k: quotas[k] - counts[k], reverse=True):
+    for key in sorted(quotas, key=lambda k: quotas[k] - counts[k], reverse=True):
         if remaining <= 0:
             break
-        if counts[kind] < len(groups[kind]):
-            counts[kind] += 1
+        if counts[key] < len(groups[key]):
+            counts[key] += 1
             remaining -= 1
 
     picked: List[Dict[str, Any]] = []
-    for kind in ("simple", "medium", "complex"):
-        group = groups.get(kind, [])
-        count = counts.get(kind, 0)
+    for key in order:
+        group = groups.get(key, [])
+        count = counts.get(key, 0)
         if not group or count <= 0:
             continue
         step = len(group) / float(count)
@@ -145,6 +152,14 @@ def build_ledger(tasks: List[Dict[str, Any]], pricing: Dict[str, Any],
             frontier_cost, summary["total_cost_usd"]
         )
 
+    class_distribution = None
+    if all("task_class" in task for task in subset):
+        class_distribution = {}
+        for task in subset:
+            class_distribution[task["task_class"]] = (
+                class_distribution.get(task["task_class"], 0) + 1
+            )
+
     return {
         "_meta": {
             "mode": "real",
@@ -156,6 +171,7 @@ def build_ledger(tasks: List[Dict[str, Any]], pricing: Dict[str, Any],
             "task_file": os.path.relpath(DEFAULT_TASKS, REPO_ROOT),
             "task_count": len(subset),
             "sampled_task_ids": [task["task_id"] for task in subset],
+            "task_class_distribution": class_distribution,
             "max_tokens": max_tokens,
             "small_system_prompt": getattr(backends["small"], "system_prompt", None),
             "policies": list(POLICIES),
@@ -173,6 +189,7 @@ def build_ledger(tasks: List[Dict[str, Any]], pricing: Dict[str, Any],
                 "confidence_threshold": policy["confidence_threshold"],
                 "confidence_by_difficulty": policy["confidence_by_difficulty"],
                 "max_attempts": policy["max_attempts"],
+                "escalation_mode": policy.get("escalation_mode", "confidence"),
             },
         },
         "traces": traces,
@@ -243,6 +260,13 @@ def main() -> None:
     parser.add_argument("--small-system-prompt", default=None,
                         help="system instruction sent only to the small model; "
                              "use it to test brevity as a cost lever")
+    parser.add_argument("--escalation-mode", default=None,
+                        choices=("confidence", "verifier_first"),
+                        help="cascade gate: 'confidence' (default, mean-token "
+                             "probability below threshold escalates) or "
+                             "'verifier_first' (accept on verifier pass, "
+                             "escalate on verifier fail, fall back to "
+                             "confidence when no verifier exists)")
     args = parser.parse_args()
 
     tasks = load_tasks(args.tasks)
@@ -252,6 +276,8 @@ def main() -> None:
         if not 0.0 <= args.threshold <= 1.0:
             raise ValueError("--threshold must be between 0 and 1")
         policy["confidence_threshold"] = args.threshold
+    if args.escalation_mode is not None:
+        policy["escalation_mode"] = args.escalation_mode
     backends = build_backends(args.timeout, args.small_model, args.frontier_model)
     if args.small_system_prompt:
         backends["small"].system_prompt = args.small_system_prompt

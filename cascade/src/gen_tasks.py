@@ -1,10 +1,14 @@
 """
-Deterministic synthetic task-flow generator (F1.5).
+Deterministic synthetic task-flow generator (F1.5 / F2.5).
 
-Builds ~100 tasks from data/templates/task_templates.json using the task mix
-in cascade/configs/policy.yaml. Every task gets a unique task_id, a stable
-created_at timestamp and a prompt with a serial marker, so two runs with the
-same seed produce byte-identical JSONL.
+Builds ~100 tasks from data/templates/task_templates.json using the class mix
+in cascade/configs/policy.yaml. Every task carries a ``task_class`` and a
+``verification`` spec so the evaluator can grade it deterministically (or fall
+back to an LLM judge where no deterministic check exists).
+
+Every task gets a unique task_id, a stable created_at timestamp and a prompt
+with a serial marker, so two runs with the same seed produce byte-identical
+JSONL.
 
 Usage (repo root):
     python3 cascade/src/gen_tasks.py
@@ -24,35 +28,55 @@ _SRC_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _SRC_DIR)
 
 from router import DEFAULT_POLICY_PATH, load_policy  # noqa: E402
-from schema import validate_task  # noqa: E402
+from schema import TASK_CLASSES, validate_task  # noqa: E402
 
 REPO_ROOT = os.path.abspath(os.path.join(_SRC_DIR, "..", ".."))
 DEFAULT_TEMPLATES = os.path.join(REPO_ROOT, "data", "templates", "task_templates.json")
 DEFAULT_OUT = os.path.join(REPO_ROOT, "data", "synthetic", "seed_tasks.jsonl")
 
 DIFFICULTY_BY_KIND = {"simple": "low", "medium": "medium", "complex": "high"}
+KIND_ORDER = ("simple", "medium", "complex")
 
 
-def load_templates(path: str = DEFAULT_TEMPLATES) -> Dict[str, List[Dict[str, Any]]]:
+def load_templates(path: str = DEFAULT_TEMPLATES) -> Dict[str, Any]:
     with open(path, "r", encoding="utf-8") as handle:
         templates = json.load(handle)
-    for kind in ("simple", "medium", "complex"):
-        if not templates.get(kind):
-            raise ValueError(f"{path}: missing templates for kind '{kind}'")
+    classes = templates.get("classes")
+    if not isinstance(classes, dict):
+        raise ValueError(f"{path}: missing 'classes' object")
+    for task_class in TASK_CLASSES:
+        pools = classes.get(task_class)
+        if not isinstance(pools, dict):
+            raise ValueError(f"{path}: missing class '{task_class}'")
+        for kind in KIND_ORDER:
+            pool = pools.get(kind)
+            if not pool:
+                # A class does not have to span every kind, but a configured
+                # (class, kind) pair must have at least one template.
+                continue
+            for entry in pool:
+                for key in ("prompt", "tags", "verification"):
+                    if key not in entry:
+                        raise ValueError(
+                            f"{path}: {task_class}/{kind} template missing '{key}'"
+                        )
     return templates
 
 
-def _mix_counts(policy: Dict[str, Any], total: int) -> Dict[str, int]:
-    """Scale the configured task mix so the counts sum exactly to ``total``."""
-    mix = policy["task_mix"]
-    base_total = sum(int(mix[kind]) for kind in ("simple", "medium", "complex"))
-    counts = {
-        kind: int(round(total * int(mix[kind]) / base_total))
-        for kind in ("simple", "medium", "complex")
-    }
-    # Rounding can drift by a task or two; fix on the largest bucket.
+def _scale_mix(weights: Dict[str, int], total: int) -> Dict[str, int]:
+    """Scale weights so the counts sum exactly to ``total`` (largest remainder)."""
+    base = sum(int(value) for value in weights.values())
+    if base <= 0:
+        raise ValueError(f"mix weights must be positive: {weights}")
+    order = list(weights)
+    raw = {key: total * int(weights[key]) / base for key in order}
+    counts = {key: int(raw[key]) for key in order}
     drift = total - sum(counts.values())
-    counts["medium"] += drift
+    for key in sorted(order, key=lambda k: (-(raw[k] - counts[k]), order.index(k))):
+        if drift <= 0:
+            break
+        counts[key] += 1
+        drift -= 1
     return counts
 
 
@@ -62,26 +86,39 @@ def build_tasks(total: int = 100, seed: int = 20261107,
     policy = load_policy(policy_path)
     templates = load_templates(templates_path)
     rng = random.Random(seed)
-    counts = _mix_counts(policy, total)
 
-    kinds: List[str] = []
-    for kind in ("simple", "medium", "complex"):
-        kinds.extend([kind] * counts[kind])
-    rng.shuffle(kinds)
+    class_counts = _scale_mix(policy["task_class_mix"], total)
+    slots: List[tuple] = []
+    for task_class in TASK_CLASSES:
+        class_total = class_counts.get(task_class, 0)
+        if class_total <= 0:
+            continue
+        kind_weights = policy["task_class_kind_mix"][task_class]
+        kind_counts = _scale_mix(kind_weights, class_total)
+        for kind in KIND_ORDER:
+            slots.extend([(task_class, kind)] * kind_counts.get(kind, 0))
+    rng.shuffle(slots)
 
     start = datetime(2026, 11, 4, 9, 0, 0, tzinfo=timezone(timedelta(hours=8)))
     tasks: List[Dict[str, Any]] = []
-    template_cursor = {kind: 0 for kind in counts}
-    for index, kind in enumerate(kinds, start=1):
-        pool = templates[kind]
-        template = pool[template_cursor[kind] % len(pool)]
-        template_cursor[kind] += 1
+    cursors: Dict[tuple, int] = {}
+    for index, (task_class, kind) in enumerate(slots, start=1):
+        pool = templates["classes"][task_class].get(kind) or []
+        if not pool:
+            raise ValueError(
+                f"{templates_path}: no templates for {task_class}/{kind}"
+            )
+        cursor = cursors.get((task_class, kind), 0)
+        template = pool[cursor % len(pool)]
+        cursors[(task_class, kind)] = cursor + 1
         task = {
             "task_id": f"task_{index:04d}",
             "kind": kind,
+            "task_class": task_class,
             "prompt": f"{template['prompt']}（任务编号 {index:03d}）",
             "expected_difficulty": DIFFICULTY_BY_KIND[kind],
             "tags": list(template["tags"]),
+            "verification": template["verification"],
             "created_at": (start + timedelta(minutes=index)).isoformat(),
         }
         result = validate_task(task)
@@ -108,11 +145,22 @@ def main() -> None:
     tasks = build_tasks(total=args.total, seed=args.seed)
     write_jsonl(args.out, tasks)
 
-    distribution: Dict[str, int] = {}
+    class_distribution: Dict[str, int] = {}
+    kind_distribution: Dict[str, int] = {}
+    verification_distribution: Dict[str, int] = {}
     for task in tasks:
-        distribution[task["kind"]] = distribution.get(task["kind"], 0) + 1
+        class_distribution[task["task_class"]] = (
+            class_distribution.get(task["task_class"], 0) + 1
+        )
+        kind_distribution[task["kind"]] = kind_distribution.get(task["kind"], 0) + 1
+        vtype = task["verification"]["type"]
+        verification_distribution[vtype] = (
+            verification_distribution.get(vtype, 0) + 1
+        )
     print(f"wrote {len(tasks)} tasks -> {os.path.relpath(args.out, REPO_ROOT)}")
-    print(f"kind distribution: {distribution}")
+    print(f"task_class distribution: {class_distribution}")
+    print(f"kind distribution: {kind_distribution}")
+    print(f"verification distribution: {verification_distribution}")
     print(f"unique task ids: {len({t['task_id'] for t in tasks})}")
 
 

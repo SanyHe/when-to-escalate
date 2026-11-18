@@ -1,108 +1,495 @@
 {
   "_meta": {
-    "description": "Seed task templates for the cascade demo. All prompts are synthetic and involve no real personal data.",
-    "version": "1"
+    "description": "Seed task templates grouped by task_class and kind. All prompts are synthetic and involve no real personal data. A task_class is different from kind: should_refuse prompts lack required input, small_sufficient tasks have a deterministic verifier, frontier_required tasks are open-ended quality work.",
+    "version": "2"
   },
-  "simple": [
-    {
-      "prompt": "今天东莞天气怎么样？需要带伞吗？",
-      "tags": ["weather", "single_lookup"]
+  "classes": {
+    "should_refuse": {
+      "simple": [
+        {
+          "prompt": "今天东莞的实时天气怎么样？需要带伞吗？",
+          "tags": ["weather", "live_data"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["实时天气数据"],
+            "forbidden_patterns": [
+              "\\d{1,2}\\s*(?:°C|℃|度)",
+              "(?:今天|今日)[^。]{0,12}(?:晴|多云|阴|小雨|中雨|大雨|雪)"
+            ]
+          }
+        },
+        {
+          "prompt": "把附件里的会议纪要整理成三条待办。",
+          "tags": ["meeting", "missing_attachment"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["会议纪要附件"],
+            "forbidden_patterns": [
+              "\\d{4}[-/年]\\d{1,2}[-/月]\\d{1,2}",
+              "\\d{1,2}\\s*[:：]\\s*\\d{2}"
+            ]
+          }
+        },
+        {
+          "prompt": "把这封邮件翻译成英文。",
+          "tags": ["translation", "missing_attachment"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["邮件正文"],
+            "forbidden_patterns": []
+          }
+        },
+        {
+          "prompt": "这个 JSON 里的 version 字段是什么值？",
+          "tags": ["json", "missing_context"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["JSON 文本"],
+            "forbidden_patterns": [
+              "[\"']?version[\"']?\\s*[:：]\\s*[\"']?v?\\d+(?:\\.\\d+)+"
+            ]
+          }
+        },
+        {
+          "prompt": "从这份简历里提取候选人的工作年限。",
+          "tags": ["resume", "missing_attachment"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["简历内容"],
+            "forbidden_patterns": [
+              "\\d+\\s*年(?:工作)?经验"
+            ]
+          }
+        },
+        {
+          "prompt": "把明天上午十点的日程改到下午两点。",
+          "tags": ["calendar", "missing_access"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["日历访问权限和当前日程"],
+            "forbidden_patterns": []
+          }
+        }
+      ],
+      "medium": [
+        {
+          "prompt": "根据以下销售数据，计算环比增长率并给出三条行动建议。",
+          "tags": ["data_analysis", "missing_context"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["销售数据"],
+            "forbidden_patterns": [
+              "\\d+(?:\\.\\d+)?\\s*%",
+              "环比[^。]{0,8}[-+]?\\d"
+            ]
+          }
+        },
+        {
+          "prompt": "把上个月的银行流水按类别汇总，并算出总支出。",
+          "tags": ["finance", "missing_attachment"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["银行流水"],
+            "forbidden_patterns": [
+              "\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?\\s*元",
+              "\\d+(?:\\.\\d+)?\\s*元"
+            ]
+          }
+        },
+        {
+          "prompt": "基于这份 20 页的技术方案，评估上线风险并给出迁移计划。",
+          "tags": ["risk", "missing_attachment"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["技术方案文档"],
+            "forbidden_patterns": [
+              "\\d+(?:\\.\\d+)?\\s*%"
+            ]
+          }
+        },
+        {
+          "prompt": "总结这段客服通话录音里的主要问题，并给出改进建议。",
+          "tags": ["summary", "missing_attachment"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["通话录音或转写文本"],
+            "forbidden_patterns": [
+              "\\d{1,2}\\s*[:：]\\s*\\d{2}"
+            ]
+          }
+        },
+        {
+          "prompt": "查一下当前美元兑人民币汇率，并把 1000 美元换算成人民币。",
+          "tags": ["finance", "live_data"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["实时汇率"],
+            "forbidden_patterns": [
+              "汇率[^。]{0,8}\\d+(?:\\.\\d+)?",
+              "\\d+(?:\\.\\d+)?\\s*(?:元|CNY|RMB|人民币)"
+            ]
+          }
+        },
+        {
+          "prompt": "根据这份周报找出三个进度风险，并分别给出缓解建议。",
+          "tags": ["analysis", "missing_attachment"],
+          "verification": {
+            "type": "refusal",
+            "missing_inputs": ["周报内容"],
+            "forbidden_patterns": [
+              "\\d+(?:\\.\\d+)?\\s*%"
+            ]
+          }
+        }
+      ]
     },
-    {
-      "prompt": "把这句话翻译成英文：会议改到周四下午三点。",
-      "tags": ["translation", "short_text"]
+    "small_sufficient": {
+      "simple": [
+        {
+          "prompt": "计算 128 乘以 24，只输出结果数字。",
+          "tags": ["math", "single_step"],
+          "verification": {"type": "exact_match", "expected": "3072"}
+        },
+        {
+          "prompt": "计算 (18 + 6) ÷ 4，只输出结果数字。",
+          "tags": ["math", "single_step"],
+          "verification": {"type": "exact_match", "expected": "6"}
+        },
+        {
+          "prompt": "把单词 cascade 倒序输出，只输出结果。",
+          "tags": ["string", "single_step"],
+          "verification": {"type": "exact_match", "expected": "edacsac"}
+        },
+        {
+          "prompt": "把 when to escalate 转成大写，只输出结果。",
+          "tags": ["string", "single_step"],
+          "verification": {"type": "exact_match", "expected": "WHEN TO ESCALATE"}
+        },
+        {
+          "prompt": "字符串 banana 中字母 a 出现了几次？只输出数字。",
+          "tags": ["counting", "single_step"],
+          "verification": {"type": "exact_match", "expected": "3"}
+        },
+        {
+          "prompt": "把 3, 11, 7, 5 从小到大排序，用英文逗号分隔。",
+          "tags": ["sorting", "single_step"],
+          "verification": {
+            "type": "exact_match",
+            "expected": "3,5,7,11",
+            "any_of": ["3, 5, 7, 11"]
+          }
+        },
+        {
+          "prompt": "如果今天是星期二，后天是星期几？只回答星期几。",
+          "tags": ["calendar", "single_step"],
+          "verification": {
+            "type": "exact_match",
+            "expected": "星期四",
+            "any_of": ["周四", "四"]
+          }
+        },
+        {
+          "prompt": "给定 JSON：{\"version\": \"2.4.1\", \"env\": \"prod\"}，version 字段的值是什么？只输出值。",
+          "tags": ["json", "single_lookup"],
+          "verification": {"type": "exact_match", "expected": "2.4.1"}
+        },
+        {
+          "prompt": "从文本“请联系 alice@example.com 获取报价”中提取邮箱地址，只输出邮箱。",
+          "tags": ["extraction", "single_step"],
+          "verification": {"type": "exact_match", "expected": "alice@example.com"}
+        },
+        {
+          "prompt": "从文本“请在 2026-12-01 前提交材料”中提取截止日期，只输出日期。",
+          "tags": ["extraction", "single_step"],
+          "verification": {
+            "type": "exact_match",
+            "expected": "2026-12-01",
+            "any_of": ["2026/12/01"]
+          }
+        },
+        {
+          "prompt": "1 英里等于多少公里？保留两位小数，只输出数字。",
+          "tags": ["conversion", "single_step"],
+          "verification": {"type": "exact_match", "expected": "1.61"}
+        },
+        {
+          "prompt": "计算 1 到 10 的整数之和，只输出结果数字。",
+          "tags": ["math", "single_step"],
+          "verification": {"type": "exact_match", "expected": "55"}
+        },
+        {
+          "prompt": "计算 7 的平方，只输出结果数字。",
+          "tags": ["math", "single_step"],
+          "verification": {"type": "exact_match", "expected": "49"}
+        },
+        {
+          "prompt": "计算 100 减去 37，只输出结果数字。",
+          "tags": ["math", "single_step"],
+          "verification": {"type": "exact_match", "expected": "63"}
+        },
+        {
+          "prompt": "字符串 hello 有几个字符？只输出数字。",
+          "tags": ["counting", "single_step"],
+          "verification": {"type": "exact_match", "expected": "5"}
+        },
+        {
+          "prompt": "把 12 和 30 相加，再乘以 2，只输出结果数字。",
+          "tags": ["math", "multi_step"],
+          "verification": {"type": "exact_match", "expected": "84"}
+        },
+        {
+          "prompt": "从订单号 A-8842 中提取数字部分，只输出数字。",
+          "tags": ["extraction", "single_step"],
+          "verification": {"type": "exact_match", "expected": "8842"}
+        },
+        {
+          "prompt": "0.25 用百分数表示，只输出结果。",
+          "tags": ["math", "formatting"],
+          "verification": {"type": "exact_match", "expected": "25%"}
+        },
+        {
+          "prompt": "列表 [4, 9, 2] 中的最大值是多少？只输出数字。",
+          "tags": ["math", "single_step"],
+          "verification": {"type": "exact_match", "expected": "9"}
+        },
+        {
+          "prompt": "100 摄氏度等于多少华氏度？只输出数字。",
+          "tags": ["conversion", "single_step"],
+          "verification": {"type": "exact_match", "expected": "212"}
+        }
+      ],
+      "medium": [
+        {
+          "prompt": "三项费用分别为 12.5、7.5、10 美元。计算总价，只输出 JSON，包含 total 和 currency 两个字段。",
+          "tags": ["math", "json", "multi_step"],
+          "verification": {
+            "type": "json_schema",
+            "required_keys": ["total", "currency"],
+            "key_values": {"total": 30, "currency": "USD"}
+          }
+        },
+        {
+          "prompt": "解析日志行 `ERROR 2026-11-18 disk full`，输出 JSON，包含 level 和 date 两个字段。",
+          "tags": ["log", "extraction", "multi_step"],
+          "verification": {
+            "type": "field_match",
+            "fields": [
+              {"name": "level", "pattern": "[\"']?level[\"']?\\s*[:：]\\s*[\"']?ERROR"},
+              {"name": "date", "pattern": "[\"']?date[\"']?\\s*[:：]\\s*[\"']?2026-11-18"}
+            ]
+          }
+        },
+        {
+          "prompt": "从文本“发件人：bob@example.com；截止日期：2026-12-31；事项：提交报价单”中提取发件人、截止日期和事项，输出 JSON。",
+          "tags": ["email", "extraction", "multi_step"],
+          "verification": {
+            "type": "field_match",
+            "fields": [
+              {"name": "sender", "pattern": "bob@example\\.com"},
+              {"name": "deadline", "pattern": "2026-12-31"},
+              {"name": "item", "pattern": "提交报价单"}
+            ]
+          }
+        },
+        {
+          "prompt": "把 0.375 化成最简分数，只输出分数。",
+          "tags": ["math", "fraction"],
+          "verification": {"type": "exact_match", "expected": "3/8"}
+        },
+        {
+          "prompt": "把 2026-03-05 转成“2026年3月5日”的格式，只输出结果。",
+          "tags": ["date", "formatting"],
+          "verification": {
+            "type": "exact_match",
+            "expected": "2026年3月5日",
+            "any_of": ["2026年03月05日"]
+          }
+        },
+        {
+          "prompt": "统计句子 the quick brown fox jumps over the lazy dog 的单词数，只输出数字。",
+          "tags": ["counting", "text"],
+          "verification": {"type": "exact_match", "expected": "9"}
+        },
+        {
+          "prompt": "写一条 Python 表达式求列表 [1, 2, 3] 的和，只输出表达式。",
+          "tags": ["coding", "expression"],
+          "verification": {
+            "type": "regex",
+            "pattern": "sum\\s*\\(\\s*\\[\\s*1\\s*,\\s*2\\s*,\\s*3\\s*\\]\\s*\\)"
+          }
+        },
+        {
+          "prompt": "按 1 美元 = 7.2 人民币，把 25 美元换算成人民币，只输出数字。",
+          "tags": ["math", "conversion"],
+          "verification": {"type": "exact_match", "expected": "180"}
+        }
+      ]
     },
-    {
-      "prompt": "帮我把这条会议纪要压缩成三行要点。",
-      "tags": ["summarize", "short_text"]
-    },
-    {
-      "prompt": "计算 128 乘以 24 等于多少，并给出计算过程。",
-      "tags": ["math", "single_step"]
-    },
-    {
-      "prompt": "从这封邮件里提取发件人、截止日期和需要我做的事。",
-      "tags": ["email", "extraction"]
-    },
-    {
-      "prompt": "把明天上午十点的日程改到下午两点。",
-      "tags": ["calendar", "single_action"]
-    },
-    {
-      "prompt": "给这段产品描述起三个标题，每个不超过十个字。",
-      "tags": ["copywriting", "short_text"]
-    },
-    {
-      "prompt": "这个 JSON 里的 version 字段是什么值？",
-      "tags": ["json", "single_lookup"]
+    "frontier_required": {
+      "medium": [
+        {
+          "prompt": "接口文档：POST /v1/tasks 接收 {\"title\": string, \"priority\": 1-5}，返回 201 和 task_id；参数缺失时返回 400。请写一个 Python 调用示例，并说明错误处理。",
+          "tags": ["coding", "documentation"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must give a runnable request example matching the contract and handle 400/201 correctly."
+          }
+        },
+        {
+          "prompt": "把这段中文产品介绍改写成适合英文官网的版本，保持信息完整：这款笔记工具支持跨设备同步、离线编辑和端到端加密，适合个人和小团队使用。",
+          "tags": ["translation", "marketing"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must be fluent English marketing copy that preserves all three features and the audience."
+          }
+        },
+        {
+          "prompt": "销售数据显示：7 月 120 万、8 月 108 万、9 月 99 万。找出环比下降的可能原因，并给出三条可执行建议。",
+          "tags": ["data_analysis", "recommendation"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must compute the two month-over-month declines correctly and give specific, plausible actions."
+          }
+        },
+        {
+          "prompt": "候选人 A：5 年后端经验，熟悉 Go 和 Kubernetes；候选人 B：3 年经验，熟悉 Python 和数据分析。岗位要求：3 年以上后端经验，熟悉容器编排。比较匹配度并给出面试问题清单。",
+          "tags": ["recruiting", "comparison"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must compare both candidates against each requirement and give role-relevant interview questions."
+          }
+        },
+        {
+          "prompt": "周报摘要：登录重构完成 80%；支付回调仍有 2 个未修复缺陷；压测环境本周不可用。找出三个进度风险并分别给出缓解建议。",
+          "tags": ["analysis", "risk"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must identify three distinct risks grounded in the summary and pair each with an actionable mitigation."
+          }
+        },
+        {
+          "prompt": "错误日志：`WARN 10:01 retry 1`、`WARN 10:02 retry 2`、`ERROR 10:03 timeout`、`ERROR 10:04 circuit open`。给出根因假设、验证步骤和修复思路。",
+          "tags": ["debugging", "log"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must connect retries to timeout and circuit opening, and propose concrete verification steps."
+          }
+        },
+        {
+          "prompt": "客户投诉：下单后三天未发货，客服两次承诺回电但未回，要求退款。把投诉改写成内部跟进清单，按优先级排列。",
+          "tags": ["email", "planning"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must turn the complaint into a prioritized internal checklist covering refund, callback and root cause."
+          }
+        },
+        {
+          "prompt": "为一个调用第三方 API 的服务设计重试策略：超时率 2%，P99 延迟 3 秒，要求控制成本和避免雪崩。给出状态机、参数和停止条件。",
+          "tags": ["architecture", "reliability"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must define retry/backoff/jitter/circuit-breaker behavior and a clear stopping condition."
+          }
+        }
+      ],
+      "complex": [
+        {
+          "prompt": "设计一个跨三个平台的比价流程：抓取价格、处理汇率、输出最低价和可信度说明。",
+          "tags": ["multi_step", "research", "pricing"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must define the pipeline stages, currency handling, tie-breaking and a confidence explanation."
+          }
+        },
+        {
+          "prompt": "评估一个日活 100 万的 SaaS 从单体迁移到微服务的风险，给出分阶段计划与回滚方案。",
+          "tags": ["architecture", "migration", "risk"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must name concrete risks, sequence the migration in phases and define rollback triggers."
+          }
+        },
+        {
+          "prompt": "写一份关于级联推理成本优化的调研摘要，包含三种架构的假设、指标与结论。",
+          "tags": ["research", "writing", "unit_economics"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must compare three cascade architectures with explicit assumptions and cost/quality metrics."
+          }
+        },
+        {
+          "prompt": "分析日志：`10:00:01 acquire lock`、`10:00:02 timeout waiting for lock`、`10:00:02 retry`、`10:00:03 acquire lock`、`10:00:03 write conflict`、`10:00:04 rollback`。定位根因并给出验证步骤与修复思路。",
+          "tags": ["debugging", "distributed_system"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must link lock contention to write conflicts and propose a verifiable fix."
+          }
+        },
+        {
+          "prompt": "为一个多租户 SaaS 设计配额与限流方案，说明边界条件、失败模式与监控指标。",
+          "tags": ["architecture", "multi_tenant", "reliability"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must cover per-tenant quotas, fairness, failure modes and observable metrics."
+          }
+        },
+        {
+          "prompt": "公司数据：收入 2 亿、毛利率 60%、增长率 25%、净利率 8%。构建估值假设并写出敏感性分析。",
+          "tags": ["finance", "modeling"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must state valuation assumptions and show how the result moves with growth and margin."
+          }
+        },
+        {
+          "prompt": "设计一套面向 always-on agent 的事件优先级策略，给出状态机、评估指标和灰度步骤。",
+          "tags": ["agent", "design", "evaluation"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must define states/transitions, measurable priorities and a staged rollout."
+          }
+        },
+        {
+          "prompt": "审查代码：两个线程同时执行 `if not cache.get(k): cache[k] = load(k)`，缓存为普通 dict。指出数据竞争风险并给出可验证的修复方案。",
+          "tags": ["code_review", "concurrency"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must identify the check-then-act race and propose a testable synchronization or atomic fix."
+          }
+        },
+        {
+          "prompt": "设计一个 LLM 网关的降级策略：主模型超时或限流时如何切换，给出状态机、指标与回滚条件。",
+          "tags": ["architecture", "gateway", "reliability"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must define fallback triggers, state transitions, SLIs and rollback criteria."
+          }
+        },
+        {
+          "prompt": "技术方案评审：目标是低延迟读取，约束是两周上线且不能停机。方案 A 加只读副本，方案 B 引入缓存层。比较两种方案并给出建议。",
+          "tags": ["architecture", "review"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must compare both options against latency, schedule and downtime constraints and recommend one."
+          }
+        },
+        {
+          "prompt": "设计一个多语言客服工单的路由与升级规则，说明分流逻辑、质量指标与人工兜底。",
+          "tags": ["operations", "routing"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must specify language routing, escalation triggers, quality metrics and human fallback."
+          }
+        },
+        {
+          "prompt": "为一个实时推荐系统设计 A/B 实验：假设、样本量、指标、停止规则与风险。",
+          "tags": ["experimentation", "metrics"],
+          "verification": {
+            "type": "llm_judge",
+            "rubric": "Answer must state a testable hypothesis, sample-size logic, primary metrics and stopping rules."
+          }
+        }
+      ]
     }
-  ],
-  "medium": [
-    {
-      "prompt": "对比这三家云服务商的 GPU 按小时价格，给出性价比排序和推荐。",
-      "tags": ["comparison", "multi_source"]
-    },
-    {
-      "prompt": "把这封客户投诉邮件改写成一份内部跟进清单，按优先级排列。",
-      "tags": ["email", "planning"]
-    },
-    {
-      "prompt": "根据这份周报，找出三个进度风险并分别给出缓解建议。",
-      "tags": ["analysis", "risk"]
-    },
-    {
-      "prompt": "帮我规划下周从东莞到上海的两日行程，预算控制在三千元以内。",
-      "tags": ["travel", "planning"]
-    },
-    {
-      "prompt": "阅读这段接口文档，写出一个调用示例并说明错误处理。",
-      "tags": ["coding", "documentation"]
-    },
-    {
-      "prompt": "把这份中文产品介绍改写成适合英文官网的版本，保持信息完整。",
-      "tags": ["translation", "marketing"]
-    },
-    {
-      "prompt": "从这组销售数据里找出环比下降的原因，并给出三条行动建议。",
-      "tags": ["data_analysis", "recommendation"]
-    },
-    {
-      "prompt": "比较两份简历与岗位要求的匹配度，给出面试问题清单。",
-      "tags": ["recruiting", "comparison"]
-    }
-  ],
-  "complex": [
-    {
-      "prompt": "设计一个跨三个平台的比价流程：抓取价格、处理汇率、输出最低价和可信度说明。",
-      "tags": ["multi_step", "research", "pricing"]
-    },
-    {
-      "prompt": "基于这份 20 页的技术方案，评估上线风险、给出分阶段迁移计划与回滚方案。",
-      "tags": ["long_context", "planning", "risk"]
-    },
-    {
-      "prompt": "写一份关于级联推理成本优化的调研报告，包含三种架构的假设、指标与结论。",
-      "tags": ["research", "writing", "unit_economics"]
-    },
-    {
-      "prompt": "分析这段分布式系统日志，定位可能的根因，并给出验证步骤与修复补丁思路。",
-      "tags": ["debugging", "distributed_system"]
-    },
-    {
-      "prompt": "为一个多租户 SaaS 设计配额与限流方案，说明边界条件、失败模式与监控指标。",
-      "tags": ["architecture", "multi_tenant", "reliability"]
-    },
-    {
-      "prompt": "把这份季度财报与三家同业公司对比，构建估值假设并写出敏感性分析。",
-      "tags": ["finance", "comparison", "modeling"]
-    },
-    {
-      "prompt": "设计一套面向 always-on agent 的事件优先级策略，给出状态机、评估指标和灰度步骤。",
-      "tags": ["agent", "design", "evaluation"]
-    },
-    {
-      "prompt": "审查这段包含并发写入的代码，指出数据竞争风险并给出可验证的修复方案。",
-      "tags": ["code_review", "concurrency"]
-    }
-  ]
+  }
 }

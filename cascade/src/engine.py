@@ -26,6 +26,7 @@ sys.path.insert(0, _SRC_DIR)
 from pricing import call_cost, summarize_records  # noqa: E402
 from router import needs_escalation, route_escalation, route_first  # noqa: E402
 from schema import validate_cost_record, validate_route_decision  # noqa: E402
+from verifier import STATUS_FAILED, STATUS_NEEDS_JUDGE, STATUS_PASSED, verify_answer  # noqa: E402
 
 
 class CascadeEngine:
@@ -86,6 +87,8 @@ class CascadeEngine:
         reason = ""
         if not small["success"]:
             reason = "fallback: the small model failed, escalate to the frontier model"
+        elif self.policy.get("escalation_mode") == "verifier_first":
+            reason = self._verifier_decision(task, small, first)
         elif needs_escalation(first["confidence"], self.policy):
             reason = (
                 "quality check: small-model confidence "
@@ -104,6 +107,40 @@ class CascadeEngine:
             success = bool(small["success"])
 
         return self._rollup(task, decisions, responses, success)
+
+    def _verifier_decision(self, task: Dict[str, Any], small: Dict[str, Any],
+                           first: Dict[str, Any]) -> str:
+        """Return an escalation reason, or an empty string to keep the small answer.
+
+        Called only when the small model succeeded and the policy asks for
+        verifier-first routing. Empty means "the verifier is happy, keep the
+        small answer"; non-empty is the reason to escalate. When the task has
+        no deterministic verifier we fall back to the confidence threshold so
+        the policy still has a gate for unverifiable tasks.
+        """
+        answer = small.get("content") or ""
+        result = verify_answer(task, answer)
+        if result["status"] == STATUS_PASSED:
+            # The verifier says the small answer is good; no escalation needed
+            # even when confidence is low. Append the verdict to the first
+            # decision's reason so the trace documents why we stayed.
+            first["reason"] = (
+                (first.get("reason") or "cascade: small model passed verifier")
+                + f"; verifier={result['type']} ({result['reason']})"
+            )
+            return ""
+        if result["status"] == STATUS_FAILED:
+            return (
+                f"verifier failed: {result['type']} - {result['reason']}"
+            )
+        # STATUS_NEEDS_JUDGE — no deterministic check, fall back to confidence.
+        if needs_escalation(first["confidence"], self.policy):
+            return (
+                "verifier unavailable (task has no deterministic check), "
+                f"fell back to confidence threshold "
+                f"{float(self.policy['confidence_threshold']):.2f}"
+            )
+        return ""
 
     # -- accounting --------------------------------------------------------
 
