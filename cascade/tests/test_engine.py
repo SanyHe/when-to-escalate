@@ -328,6 +328,47 @@ def test_verifier_first_falls_back_to_confidence_when_no_verification_exists(pri
     assert "verifier unavailable" in trace2["route_decisions"][1]["reason"]
 
 
+def test_verifier_strict_escalates_unverifiable_task_despite_high_confidence(pricing, policy):
+    backends = {
+        "small": _scripted("small", [True], confidences=[0.99]),
+        "frontier": _scripted("frontier", [True]),
+    }
+    engine = CascadeEngine(
+        backends, pricing, _verifier_policy(policy, "verifier_strict"), "cascade"
+    )
+
+    trace = engine.run_task(TASK)
+
+    assert len(trace["responses"]) == 2
+    assert trace["route_decisions"][1]["escalated"] is True
+    assert "strict mode" in trace["route_decisions"][1]["reason"]
+    assert backends["frontier"].calls == [1]
+
+
+def test_verifier_strict_still_accepts_a_verified_answer(pricing, policy):
+    backends = {
+        "small": ScriptedBackend(
+            "small", [True], confidences=[0.20], contents=["The answer is 3072."],
+        ),
+        "frontier": ScriptedBackend("frontier", [True]),
+    }
+    engine = CascadeEngine(
+        backends, pricing, _verifier_policy(policy, "verifier_strict"), "cascade"
+    )
+    task = dict(
+        TASK,
+        expected_difficulty="high",
+        verification={"type": "exact_match", "expected": "3072"},
+        prompt="What is 128 * 24?",
+    )
+
+    trace = engine.run_task(task)
+
+    assert len(trace["responses"]) == 1
+    assert "verifier=" in trace["route_decisions"][0]["reason"]
+    assert backends["frontier"].calls == []
+
+
 def test_verifier_first_still_falls_back_on_small_model_http_failure(pricing, policy):
     # The low-level HTTP-success check is above the verifier: a small model
     # that returned no content must always escalate, regardless of policy.

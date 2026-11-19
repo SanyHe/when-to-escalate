@@ -87,7 +87,7 @@ class CascadeEngine:
         reason = ""
         if not small["success"]:
             reason = "fallback: the small model failed, escalate to the frontier model"
-        elif self.policy.get("escalation_mode") == "verifier_first":
+        elif self.policy.get("escalation_mode") in ("verifier_first", "verifier_strict"):
             reason = self._verifier_decision(task, small, first)
         elif needs_escalation(first["confidence"], self.policy):
             reason = (
@@ -113,10 +113,10 @@ class CascadeEngine:
         """Return an escalation reason, or an empty string to keep the small answer.
 
         Called only when the small model succeeded and the policy asks for
-        verifier-first routing. Empty means "the verifier is happy, keep the
+        verifier-aware routing. Empty means "the verifier is happy, keep the
         small answer"; non-empty is the reason to escalate. When the task has
-        no deterministic verifier we fall back to the confidence threshold so
-        the policy still has a gate for unverifiable tasks.
+        no deterministic verifier, verifier-first falls back to confidence and
+        strict mode always escalates.
         """
         answer = small.get("content") or ""
         result = verify_answer(task, answer)
@@ -133,7 +133,13 @@ class CascadeEngine:
             return (
                 f"verifier failed: {result['type']} - {result['reason']}"
             )
-        # STATUS_NEEDS_JUDGE — no deterministic check, fall back to confidence.
+        # STATUS_NEEDS_JUDGE — strict mode pays for the frontier model rather
+        # than trusting confidence on a task with no deterministic check.
+        if self.policy.get("escalation_mode") == "verifier_strict":
+            return (
+                "verifier unavailable (task has no deterministic check), "
+                "strict mode escalates every unverifiable task"
+            )
         if needs_escalation(first["confidence"], self.policy):
             return (
                 "verifier unavailable (task has no deterministic check), "

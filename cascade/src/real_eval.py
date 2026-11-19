@@ -261,12 +261,14 @@ def main() -> None:
                         help="system instruction sent only to the small model; "
                              "use it to test brevity as a cost lever")
     parser.add_argument("--escalation-mode", default=None,
-                        choices=("confidence", "verifier_first"),
+                        choices=("confidence", "verifier_first", "verifier_strict"),
                         help="cascade gate: 'confidence' (default, mean-token "
-                             "probability below threshold escalates) or "
+                             "probability below threshold escalates), "
                              "'verifier_first' (accept on verifier pass, "
                              "escalate on verifier fail, fall back to "
-                             "confidence when no verifier exists)")
+                             "confidence when no verifier exists), or "
+                             "'verifier_strict' (also escalate every "
+                             "unverifiable task)")
     args = parser.parse_args()
 
     tasks = load_tasks(args.tasks)
