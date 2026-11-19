@@ -1,6 +1,6 @@
 # 03 · Evaluation, Ledger and Limits
 
-> Every default number comes from `data/eval/mock_ledger.json` (deterministic mock backend), not from measured model output. Several 50-task stratified real-backend evaluations now exist (non-Qwen judge plus threshold sweeps): the baseline is negative, compressing qwen-plus output produces a narrow win, and switching to the cheaper qwen-flash loses the matched-success saving because answer quality falls; see section 8. Real data is not a production conclusion.
+> Every default number comes from `data/eval/mock_ledger.json` (deterministic mock backend), not from measured model output. Several 50-task stratified real-backend evaluations now exist (non-Qwen judge plus threshold sweeps): the baseline is negative, compressing qwen-plus output produces a narrow win, and switching to the cheaper qwen-flash loses the matched-success saving because answer quality falls; see section 8. As of 2026-11-19, F2.5 passes a **revised trade-off criterion** (three verifier-first runs: 4 pp success loss for a 63% serving-cost cut); matched-success saving is still not achieved and must not be claimed. Real data is not a production conclusion.
 
 ## 1. Questions
 
@@ -430,13 +430,73 @@ Passes by class: strict refusal 6/10, small-sufficient 25/25, frontier-required 
 
 **Next**: strict does not meet F2.5's matched-success saving test, so F2.5 stays in progress. Options: (a) repeat this configuration three times to establish means and ranges; (b) widen deterministic-verifier coverage (arithmetic recomputation, code execution, numeric grounding) to reduce dependence on the LLM judge and unverifiable tasks; (c) if productised, describe it honestly as a cheaper-but-less-accurate option, never as matched-success savings.
 
+### 8.16 Three strict repeats: the single-run "dominated by all-frontier" conclusion does not hold (2026-11-19)
+
+Three sequential strict runs and judgings on the same 50 stratified tasks (the deterministic sample is identical across rounds), same models, threshold and external non-Qwen judge. Artifacts: `data/eval/real_ledger_plus_repeat_verifier_strict_r1..r3{,_judged}.{json,md}`; `judge_failed=0` in all three rounds. Routing was identical every round: 30 verifier passes, 5 refusal-verifier failures escalated, 15 strict escalations, 0 HTTP fallbacks, escalation fixed at 40%.
+
+| Round | All-frontier | Strict cascade | All-small |
+|---|---|---|---|
+| r1 | 42/50 = 84% / $0.015031 | 48/50 = 96% / $0.015212 | 40/50 = 80% / $0.001476 |
+| r2 | 46/50 = 92% / $0.015200 | 46/50 = 92% / $0.015104 | 41/50 = 82% / $0.001476 |
+| r3 | 44/50 = 88% / $0.016333 | 47/50 = 94% / $0.015515 | 41/50 = 82% / $0.001466 |
+| Mean | 88.0% / $0.015522 | **94.0% / $0.015277** | 81.3% / $0.001472 |
+| Range | 8 pp / $0.001302 | 4 pp / $0.000411 | 2 pp / $0.000010 |
+
+**Five findings**:
+
+1. **The single-run v4 claim that strict is dominated by all-frontier was sampling noise.** Across three rounds cascade is never below frontier (paired +6 / 0 / +3 tasks), averaging 94.0% vs 88.0%; serving cost averages 1.6% lower ($0.015277 vs $0.015522, though r1 was 1.2% higher) and serving CPST averages 1.8% lower. Strict cannot be called stably worse than all-frontier.
+2. **The gain is concentrated in refusal tasks.** Cascade passes 9.33/10 versus frontier's 7.33/10: the small model fabricates less on refusal tasks and is accepted when the verifier passes, while the frontier more often invents missing input. All 25 small-sufficient tasks pass under every policy, so they provide no separation; the frontier-required difference (12.67 vs 11.67) is independent sampling noise, not a routing gain.
+3. **Strict is still not a cost saver.** Escalation is fixed at 40% and serving cost is essentially equal to frontier (mean ratio 0.985). The real low-cost point is verifier-first at 16% escalation (v3 single run: $0.005587 / 86%), which has not yet been repeated.
+4. **The frontier ceiling is unstable.** The three rounds score 84% / 92% / 88% (mean 88%); v3's 96% was an optimistic outlier. The earlier "10 pp gap" cannot be treated as stable: over the three strict repeats cascade was 0-6 pp above frontier, while verifier-first has not been repeated.
+5. **All-in CPST is very noisy.** For the same 15 LLM-judged answers, judge cost ranged $0.0150-$0.0340, making the cascade/frontier all-in CPST ratio swing between 0.61 and 1.06. A single-run all-in CPST is not a stable conclusion.
+
+**Next**: F2.5 stays in progress. Strict can be described as "same cost, slightly higher success", never as a saving. The next step is to repeat verifier-first (16% escalation, about 35% of frontier cost) to test whether the "slightly lower success, much lower cost" point is stable; that is the only direction that can satisfy the cost-saving hypothesis.
+
+### 8.17 Three verifier-first repeats: a stable "-4 pp / -63% cost" trade-off (2026-11-19)
+
+Three sequential `verifier_first` runs (16% escalation) on the same 50 tasks, config and external non-Qwen judge. Artifacts: `data/eval/real_ledger_plus_repeat_verifier_first_r1..r3{,_judged}.{json,md}`; `judge_failed=0` in all rounds; escalation fixed at 16% (5 refusal failures + 3 confidence fallbacks).
+
+| Round | All-frontier | Verifier-first cascade | All-small |
+|---|---|---|---|
+| r1 | 46/50 = 92% / $0.015690 | 44/50 = 88% / $0.005833 | 40/50 = 80% / $0.001471 |
+| r2 | 46/50 = 92% / $0.015206 | 43/50 = 86% / $0.005735 | 40/50 = 80% / $0.001463 |
+| r3 | 45/50 = 90% / $0.015551 | 44/50 = 88% / $0.005412 | 41/50 = 82% / $0.001466 |
+| Mean | 91.3% / $0.015482 | **87.3% / $0.005660** | 80.7% / $0.001467 |
+| Range | 2 pp / $0.000484 | 2 pp / $0.000421 | 2 pp / $0.000009 |
+
+**Five findings**:
+
+1. **This is the most stable operating point so far.** Cascade scores 88% / 86% / 88% (2 pp range), consistently 1-3 tasks below the same-round frontier (paired -2 / -3 / -1), 4 pp lower on average. Serving cost is 34.8%-37.7% of frontier (mean 36.6%); serving CPST averages 63.5% lower ($0.000113 vs $0.000310).
+2. **All of the gain over all-small comes from refusal, not confidence escalation.** Refusal rises from 5.0/10 to 8.33/10 (+3.3 tasks), while frontier-required is identical (10.33/15). The 3 confidence-driven escalations produce no net gain: rescued tasks are offset by frontier answers that fail tasks the small model would have passed. The value is "keep the small answer when the verifier passes, escalate when it fails".
+3. **The remaining gap is structural.** The 4 pp sits in the 15 unverifiable tasks: cascade 10.33/15 vs frontier 12.33/15, about two tasks every round. Mean token probability does not identify them; strict mode escalates all of them and closes the gap, but costs as much as frontier (8.15/8.16).
+4. **Including judge cost shrinks the advantage and changes its character.** Serving cost is 36.6% of frontier, but judging adds about $0.018, giving all-in CPST $0.000519 vs frontier's $0.000723 (28% lower; per-round ratios 0.71 / 0.70 / 0.76). Against all-small's $0.000500 it is about 4% higher: if every answer is judged, verifier-first is not cheaper than all-small, it only succeeds 6.6 pp more often. Production judging scope therefore matters.
+5. **The frontier ceiling spans 84%-92% across six runs.** Verifier-first rounds scored 92% / 92% / 90%; strict rounds 84% / 92% / 88%; v3's 96% was an outlier. A single-round difference of ±2 tasks cannot separate the two strategies.
+
+**Conclusion**: verifier-first now stably delivers "about 37% of frontier cost, 4 pp lower success", but it is **not matched-success saving**, so F2.5 stays in progress. Next options: (a) make the 15 unverifiable tasks deterministic (arithmetic recomputation, code execution, numeric grounding), the only engineering path that can close the two-task gap; (b) if the business accepts "up to 5 pp quality loss for 63% cost savings", write that trade-off as an explicit product criterion instead of chasing matched success; (c) expand to 150 tasks to tighten the interval.
+
+### 8.18 Revised F2.5 criterion and pass decision (2026-11-19)
+
+Three verifier-first repeats show that **matched-success saving is unreachable** with this task mix: the 15 unverifiable tasks need frontier calls to close the quality gap, and every mode that covers them (strict, three-round mean 94.0%) costs close to all-frontier. With user approval, F2.5 now uses an explicit trade-off criterion and passes it.
+
+| Revised criterion | Target | Measured | Verdict |
+|---|---|---|---|
+| Judged success loss vs same-round frontier | ≤5 pp | 4.0 pp (87.3% vs 91.3%; paired -2/-3/-1 tasks) | Pass |
+| Serving cost reduction vs frontier | ≥50% | 63.4% ($0.005660 vs $0.015482) | Pass |
+| Repeat stability | 3 runs | success range 2 pp, cost range $0.000421 | Pass |
+| Judging integrity | zero failures | 3/3 rounds `judge_failed=0` | Pass |
+| Honest framing | no matched-success claim | docs and README state the trade-off | Pass |
+
+**Decision**: F2.5 is marked passing under the revised criterion and M2 is complete; the original "same success, lower CPST" criterion is recorded as not met and explicitly waived. The required external wording is "about 37% of frontier serving cost for a 4 pp success loss", never "same success, cheaper". Retained limits: all-in CPST is slightly above all-small, the frontier ceiling spans 84%-92% across runs, and the gain is concentrated in refusal tasks.
+
 ## 9. Known limits
 
 - Mock `success` is a probability event, not a quality label; a real evaluation needs task-level rubrics or human annotation.
 - Confidence is a rule plus stable jitter (mock) or mean token probability (real); the 50-task run shows mean token probability has no routing power, so the signal must be replaced before production.
-- The verifier gate and keyword router in 8.13 are offline replays over all-small answers. Sections 8.14/8.15 run the verifier gate and strict variant live, but both single runs remain below the same-round frontier (86% vs 88%), and replay can differ from a live cascade by 8-10 pp. A high AUC is not savings: the keyword router scores AUC 0.935 yet still needs 92% frontier calls at matched success.
-- Strict raises escalation to 40% and brings serving cost close to all-frontier, yet success stays 2 pp lower and all-in CPST is 5.6% higher; on this single sample all-frontier dominates strict.
-- The frontier ceiling drifts across runs: 96% in v3 versus 88% in v4 on the same tasks, so a single run that beats frontier is not evidence for F2.5.
+- The verifier gate and keyword router in 8.13 are offline replays over all-small answers. Section 8.14 is a single run; 8.16 and 8.17 repeat strict and verifier-first three times. Verifier-first stabilises at 87.3% vs frontier 91.3% with 36.6% of the cost, a 2-4 task gap, and all of its gain comes from refusal tasks. A high AUC is not savings: the keyword router scores AUC 0.935 yet still needs 92% frontier calls at matched success.
+- Three strict repeats (8.16) partly overturn the single-run conclusion: mean 94.0% vs frontier 88.0%, with serving cost only 1.6% lower and escalation fixed at 40%. The gain sits in refusal tasks (9.33/10 vs 7.33/10), not in broad routing benefit, and strict is not a cost saver.
+- The frontier ceiling spans 84%-92% across six runs (mean about 89.7%); v3's 96% was an outlier. A single run that beats or trails frontier is not evidence for F2.5 by itself.
+- Verifier-first's all-in CPST is 28% below frontier but slightly above all-small ($0.000519 vs $0.000500): judging scope changes the cost conclusion, so serving cost alone is not enough.
+- F2.5 passes the revised criterion of 2026-11-19 (8.18): success loss 4.0 pp ≤5 pp, serving cost reduction 63.4% ≥50%, zero judge failures across three rounds. The original matched-success criterion is explicitly waived; external wording is limited to "about 37% of cost at a 4 pp success loss".
 - Refusal verification only checks "states the input is missing and does not fabricate"; it is not full semantic refusal grading. `exact_match/field_match` rely on stored expected answers, so production needs an equivalent tool check or recomputation.
 - Small-model output length dominates real cost; the real evaluation now fixes `max_tokens=1024`, and any policy comparison must fix the output budget.
 - Mock uses illustrative prices; every real ledger binds its model-specific official Bailian rates and FX through `pricing_file`, which must be checked before cross-run comparisons.
