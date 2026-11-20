@@ -1,13 +1,17 @@
 // Cost panel for the When-to-Escalate demo.
 //
-// Pure static JS: loads data/ledger.json (task prompts, router confidence and
-// the raw per-attempt mock responses), then re-simulates all three policies in
-// the browser. Metric math lives in js/metrics.js, which is also verified
-// against the Python ledger by cascade/tests/verify_web_metrics.js.
+// The panel has two data surfaces:
+//   1. Real measured results — data/real_summary.json, a deterministic
+//      reduction of the three committed judged ledgers (verifier-first
+//      repeats). Rendered read-only in the "Measured results" panel.
+//   2. Interactive mock sandbox — data/ledger.json (task prompts, router
+//      confidence and raw per-attempt mock responses); the browser
+//      re-simulates all three policies. Metric math lives in js/metrics.js,
+//      verified against the Python ledger by cascade/tests/verify_web_metrics.js.
 //
 // All user-facing strings come from js/i18n.js, so the page can switch between
 // Chinese and English at runtime. Live gateway mode is optional (js/remote.js);
-// the offline mock ledger is always available.
+// the offline mock sandbox is always available.
 
 (function () {
   "use strict";
@@ -24,6 +28,8 @@
     filter: "all",
     loadError: null,
     liveEnabled: false,
+    realSummary: null,
+    realError: null,
   };
 
   function t(key, vars) { return i18n.t(key, vars); }
@@ -456,6 +462,126 @@
   }
 
   // ---------------------------------------------------------------------
+  // Real measured results (read-only, from data/real_summary.json)
+  // ---------------------------------------------------------------------
+  function renderRealResults() {
+    var box = el("realContent");
+    var sub = el("realSub");
+    if (!box) return;
+    if (!state.realSummary) {
+      if (state.realError) {
+        box.innerHTML = '<div class="list-empty">' +
+          escapeHtml(t("real.loadFail", { error: state.realError })) + "</div>";
+      }
+      return;
+    }
+    var s = state.realSummary;
+    var meta = s._meta;
+    var h = s.headline;
+    if (sub) sub.textContent = t("real.sub", { runs: meta.runs, tasks: meta.task_count });
+
+    var frontierTotal = h.frontier_serving_cost_usd;
+    function pctOfFrontier(total) {
+      return frontierTotal ? ((total / frontierTotal) * 100).toFixed(1) + "%" : "—";
+    }
+    function range(m) {
+      return (m.success_rate_min * 100).toFixed(0) + "–" + (m.success_rate_max * 100).toFixed(0);
+    }
+
+    var rows = ["all_frontier", "cascade", "all_small"].map(function (name) {
+      var m = s.mean[name];
+      var total = m.pass_cost_usd + m.failed_cost_usd;
+      return "<tr>" +
+        '<td class="real-pol">' + escapeHtml(policyLabel(name)) + "</td>" +
+        "<td>" + formatPct(m.success_rate, 1) +
+          ' <span class="real-range">(' + range(m) + ")</span></td>" +
+        "<td>" + escapeHtml(formatUsd(total)) + "</td>" +
+        "<td>" + pctOfFrontier(total) + "</td>" +
+        "<td>" + escapeHtml(formatUsd(m.cpst_usd)) + "</td>" +
+        "<td>" + escapeHtml(formatUsd(m.all_in_cpst_usd)) + "</td>" +
+        "<td>" + escapeHtml(formatUsd(m.judge_cost_usd)) + "</td>" +
+        "</tr>";
+    }).join("");
+
+    var runRows = s.runs.map(function (r) {
+      var cells = ["all_frontier", "cascade", "all_small"].map(function (name) {
+        var m = r.policies[name];
+        return formatPct(m.success_rate, 0) + " / " +
+          formatUsd(m.pass_cost_usd + m.failed_cost_usd);
+      }).join(" &nbsp;·&nbsp; ");
+      return '<div class="real-run-row"><b>' + escapeHtml(t("real.run", { n: r.run })) +
+        "</b> &nbsp;" + cells + "</div>";
+    }).join("");
+
+    var sweep = s.threshold_sweep || [];
+    var sweepRows = sweep.filter(function (_, i) {
+      return i % 3 === 0 || i === sweep.length - 1;
+    }).map(function (r) {
+      return "<tr><td>" + r.threshold.toFixed(3) + "</td>" +
+        "<td>" + formatPct(r.escalation_rate, 0) + "</td>" +
+        "<td>" + formatPct(r.judged_success, 0) + "</td>" +
+        "<td>" + formatUsd(r.cpst_usd) + "</td></tr>";
+    }).join("");
+
+    var files = (meta.source_files || []).join(", ");
+    box.innerHTML =
+      '<div class="real-headline">' + t("real.headline", {
+        costPct: h.cascade_cost_pct_of_frontier.toFixed(1),
+        gap: h.success_gap_pp.toFixed(1),
+        cascade: (h.cascade_success * 100).toFixed(1),
+        frontier: (h.frontier_success * 100).toFixed(1),
+      }) + "</div>" +
+      '<div class="real-table-wrap"><table class="real-table"><thead><tr>' +
+        "<th>" + t("real.col.policy") + "</th>" +
+        "<th>" + t("real.col.success") + "</th>" +
+        "<th>" + t("real.col.servingCost") + "</th>" +
+        "<th>" + t("real.col.costPct") + "</th>" +
+        "<th>" + t("real.col.cpst") + "</th>" +
+        "<th>" + t("real.col.allInCpst") + "</th>" +
+        "<th>" + t("real.col.judgeCost") + "</th>" +
+        "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      '<details class="real-details"><summary>' + t("real.runs.title") + "</summary>" +
+        runRows + "</details>" +
+      '<details class="real-details"><summary>' + t("real.sweep.title") + "</summary>" +
+        '<div class="real-table-wrap"><table class="real-table real-sweep"><thead><tr>' +
+        "<th>" + t("real.sweep.col.threshold") + "</th>" +
+        "<th>" + t("real.sweep.col.escalation") + "</th>" +
+        "<th>" + t("real.sweep.col.success") + "</th>" +
+        "<th>" + t("real.sweep.col.cpst") + "</th>" +
+        "</tr></thead><tbody>" + sweepRows + "</tbody></table></div>" +
+        '<p class="muted real-sweep-note">' + escapeHtml(meta.threshold_sweep_note || "") + "</p>" +
+        "</details>" +
+      '<p class="real-caveat">' + t("real.caveat", { judge: escapeHtml(meta.judge_model) }) + "</p>" +
+      '<p class="real-source muted">' + t("real.source", {
+        small: escapeHtml(meta.small_model),
+        frontier: escapeHtml(meta.frontier_model),
+        mode: escapeHtml(meta.escalation_mode),
+        threshold: meta.threshold,
+        maxTokens: meta.max_tokens,
+        files: escapeHtml(files),
+      }) + "</p>";
+  }
+
+  function loadReal() {
+    fetch("data/real_summary.json")
+      .then(function (response) {
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return response.json();
+      })
+      .then(function (summary) {
+        state.realSummary = summary;
+        renderRealResults();
+      })
+      .catch(function (error) {
+        if (window.console && error) {
+          console.error("WTE real results failed:", error.stack || error);
+        }
+        state.realError = error.message;
+        renderRealResults();
+      });
+  }
+
+  // ---------------------------------------------------------------------
   // Load + localisation
   // ---------------------------------------------------------------------
   function renderBanner() {
@@ -475,11 +601,22 @@
     renderFilterBar();
     renderLiveBadge();
     renderBanner();
+    renderRealResults();
     applyModeChrome();
     renderMetrics();
     renderParams();
     renderTaskList();
     renderCompare();
+    updateSandboxSummary();
+  }
+
+  function updateSandboxSummary() {
+    var details = document.getElementById("sandboxDetails");
+    var summary = document.getElementById("sandboxSummary");
+    if (!details || !summary) return;
+    summary.textContent = details.open
+      ? "▾ " + t("sandbox.collapse")
+      : "▸ " + t("sandbox.expand");
   }
 
   function init() {
@@ -488,6 +625,12 @@
     renderFilterBar();
     renderMetrics();
     bindLivePanel();
+    loadReal();
+
+    updateSandboxSummary();
+    document.getElementById("sandboxDetails").addEventListener("toggle", function () {
+      updateSandboxSummary();
+    });
 
     el("langBtn").addEventListener("click", function () {
       i18n.setLang(i18n.getLang() === "zh" ? "en" : "zh");

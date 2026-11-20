@@ -12,6 +12,18 @@ const path = require("path");
 const ledger = require(path.join(__dirname, "..", "..", "web", "data", "ledger.json"));
 const metrics = require(path.join(__dirname, "..", "..", "web", "js", "metrics.js"));
 
+// The panel's real-results view reads this file; a missing or malformed copy
+// would silently show an empty panel, so fail the deploy check loudly.
+const realPath = path.join(__dirname, "..", "..", "web", "data", "real_summary.json");
+let real = null;
+try {
+  real = require(realPath);
+} catch (e) {
+  console.error(`real summary missing or unreadable: ${realPath} (${e.message})`);
+  console.error("Rebuild it with: python3 cascade/src/build_web_real.py");
+  process.exit(1);
+}
+
 const params = metrics.defaultParams(ledger);
 const computed = metrics.computeAll(ledger, params);
 
@@ -56,4 +68,27 @@ if (failures) {
   console.error(`web metrics mismatch: ${failures} checks failed`);
   process.exit(1);
 }
+
+// --- real_summary.json sanity: single source of truth for the panel's real view ---
+let realFailures = 0;
+function realCheck(cond, msg) {
+  if (!cond) { realFailures += 1; console.error(`  real: ${msg}`); }
+}
+const rm = real._meta || {};
+realCheck(rm.mode === "real_measured", `_meta.mode must be real_measured, got ${rm.mode}`);
+realCheck(Array.isArray(real.runs) && real.runs.length === 3, "runs must be length 3");
+realCheck(!!real.mean && !!real.headline, "mean and headline required");
+for (const p of ["all_frontier", "cascade", "all_small"]) {
+  const m = real.mean && real.mean[p];
+  realCheck(!!m && typeof m.success_rate === "number" && m.success_rate >= 0 && m.success_rate <= 1, `${p}.success_rate out of range`);
+  realCheck(!!m && typeof m.cpst_usd === "number" && m.cpst_usd >= 0, `${p}.cpst_usd negative`);
+}
+realCheck(rm.judge_model === "external-non-qwen-judge", `judge_model must use the neutral public label, got ${rm.judge_model}`);
+realCheck(real.headline.cascade_cost_pct_of_frontier > 0 && real.headline.cascade_cost_pct_of_frontier < 100, "headline cost pct out of range");
+if (realFailures) {
+  console.error(`real summary invalid: ${realFailures} checks failed`);
+  process.exit(1);
+}
+const h = real.headline;
+console.log(`real summary OK: ${rm.runs}-run mean | cascade ${(h.cascade_success * 100).toFixed(1)}% vs frontier ${(h.frontier_success * 100).toFixed(1)}% | cost ${h.cascade_cost_pct_of_frontier.toFixed(1)}% of frontier | judge ${rm.judge_model}`);
 console.log("web metrics match the Python ledger");

@@ -1,0 +1,423 @@
+{
+  "_meta": {
+    "mode": "real_measured",
+    "generated_at": "2026-11-20T04:52:13.989048+00:00",
+    "source_files": [
+      "data/eval/real_ledger_plus_repeat_verifier_first_r1_judged.json",
+      "data/eval/real_ledger_plus_repeat_verifier_first_r2_judged.json",
+      "data/eval/real_ledger_plus_repeat_verifier_first_r3_judged.json"
+    ],
+    "task_count": 50,
+    "runs": 3,
+    "escalation_mode": "verifier_first",
+    "threshold": 0.85,
+    "max_tokens": 1024,
+    "small_model": "qwen-plus",
+    "frontier_model": "qwen-max",
+    "small_system_prompt": "Be brief: answer in at most 120 words. Do not restate the question or add preamble.",
+    "judge_model": "external-non-qwen-judge",
+    "judge_note": "Answers are graded by the task's deterministic verifier when one exists; the LLM judge is only a fallback for open-ended tasks. Routing was already decided, so grading never affects online behaviour.",
+    "pricing_file": "cascade/configs/pricing.qwen.yaml",
+    "task_class_distribution": {
+      "should_refuse": 10,
+      "small_sufficient": 25,
+      "frontier_required": 15
+    },
+    "sampled_task_ids": [
+      "task_0002",
+      "task_0010",
+      "task_0013",
+      "task_0016",
+      "task_0030",
+      "task_0035",
+      "task_0041",
+      "task_0065",
+      "task_0085",
+      "task_0095",
+      "task_0001",
+      "task_0009",
+      "task_0015",
+      "task_0018",
+      "task_0021",
+      "task_0024",
+      "task_0026",
+      "task_0031",
+      "task_0036",
+      "task_0040",
+      "task_0044",
+      "task_0048",
+      "task_0050",
+      "task_0053",
+      "task_0056",
+      "task_0059",
+      "task_0062",
+      "task_0067",
+      "task_0069",
+      "task_0073",
+      "task_0077",
+      "task_0079",
+      "task_0082",
+      "task_0091",
+      "task_0097",
+      "task_0003",
+      "task_0006",
+      "task_0020",
+      "task_0027",
+      "task_0039",
+      "task_0047",
+      "task_0055",
+      "task_0061",
+      "task_0066",
+      "task_0074",
+      "task_0081",
+      "task_0084",
+      "task_0087",
+      "task_0093",
+      "task_0099"
+    ],
+    "caveat": "50-task stratified sample; real-model numbers are model- and operating-point dependent. This is a measured trade-off, not a 'same success, cheaper' claim: cascade costs about 37% of frontier serving cost for a ~4 pp success loss.",
+    "threshold_sweep_note": "Representative offline sweep from run r1: replayed from recorded answers and verdicts, no extra API calls, cannot change online routes."
+  },
+  "headline": {
+    "frontier_success": 0.9133333333333333,
+    "cascade_success": 0.8733333333333333,
+    "small_success": 0.8066666666666666,
+    "success_gap_pp": 4.0000000000000036,
+    "frontier_serving_cost_usd": 0.015482046333333336,
+    "cascade_serving_cost_usd": 0.0056599910000000005,
+    "cascade_cost_pct_of_frontier": 36.55841662102419,
+    "cascade_cost_reduction_pct": 63.44158337897581,
+    "frontier_all_in_cpst_usd": 0.0007228139239935589,
+    "cascade_all_in_cpst_usd": 0.0005193139867864694,
+    "small_all_in_cpst_usd": 0.0005001137394308943
+  },
+  "mean": {
+    "all_frontier": {
+      "tasks": 50,
+      "judged": 50,
+      "judge_failures": 0,
+      "verified_by_verifier": 35,
+      "judged_by_llm": 15,
+      "passed": 46,
+      "failed": 4,
+      "success_rate": 0.9133333333333333,
+      "cpst_usd": 0.00027981457101449277,
+      "pass_cost_usd": 0.012778551333333336,
+      "failed_cost_usd": 0.002703495,
+      "judge_cost_usd": 0.020257197000000005,
+      "all_in_cpst_usd": 0.0007228139239935589,
+      "success_rate_min": 0.9,
+      "success_rate_max": 0.92
+    },
+    "cascade": {
+      "tasks": 50,
+      "judged": 50,
+      "judge_failures": 0,
+      "verified_by_verifier": 35,
+      "judged_by_llm": 15,
+      "passed": 44,
+      "failed": 6,
+      "success_rate": 0.8733333333333333,
+      "cpst_usd": 0.00010339939006342495,
+      "pass_cost_usd": 0.004513420666666667,
+      "failed_cost_usd": 0.0011465703333333333,
+      "judge_cost_usd": 0.018147190666666667,
+      "all_in_cpst_usd": 0.0005193139867864694,
+      "success_rate_min": 0.86,
+      "success_rate_max": 0.88
+    },
+    "all_small": {
+      "tasks": 50,
+      "judged": 50,
+      "judge_failures": 0,
+      "verified_by_verifier": 35,
+      "judged_by_llm": 15,
+      "passed": 40,
+      "failed": 10,
+      "success_rate": 0.8066666666666666,
+      "cpst_usd": 2.3703206504065035e-05,
+      "pass_cost_usd": 0.0009563636666666665,
+      "failed_cost_usd": 0.0005105156666666667,
+      "judge_cost_usd": 0.019213386333333332,
+      "all_in_cpst_usd": 0.0005001137394308943,
+      "success_rate_min": 0.8,
+      "success_rate_max": 0.82
+    }
+  },
+  "runs": [
+    {
+      "run": 1,
+      "generated_at": "2026-11-19T14:19:47.586393+00:00",
+      "policies": {
+        "all_frontier": {
+          "tasks": 50,
+          "judged": 50,
+          "judge_failures": 0,
+          "verified_by_verifier": 35,
+          "judged_by_llm": 15,
+          "passed": 46,
+          "failed": 4,
+          "success_rate": 0.92,
+          "cpst_usd": 0.0002679515869565218,
+          "pass_cost_usd": 0.012325773000000002,
+          "failed_cost_usd": 0.003363777,
+          "judge_cost_usd": 0.020584641000000004,
+          "all_in_cpst_usd": 0.0007154437826086958
+        },
+        "cascade": {
+          "tasks": 50,
+          "judged": 50,
+          "judge_failures": 0,
+          "verified_by_verifier": 35,
+          "judged_by_llm": 15,
+          "passed": 44,
+          "failed": 6,
+          "success_rate": 0.88,
+          "cpst_usd": 0.00012118654545454546,
+          "pass_cost_usd": 0.005332208000000001,
+          "failed_cost_usd": 0.000500814,
+          "judge_cost_usd": 0.016919038,
+          "all_in_cpst_usd": 0.0005057101363636365
+        },
+        "all_small": {
+          "tasks": 50,
+          "judged": 50,
+          "judge_failures": 0,
+          "verified_by_verifier": 35,
+          "judged_by_llm": 15,
+          "passed": 40,
+          "failed": 10,
+          "success_rate": 0.8,
+          "cpst_usd": 2.3436649999999995e-05,
+          "pass_cost_usd": 0.0009374659999999999,
+          "failed_cost_usd": 0.000533954,
+          "judge_cost_usd": 0.017477815,
+          "all_in_cpst_usd": 0.0004603820250000001
+        }
+      }
+    },
+    {
+      "run": 2,
+      "generated_at": "2026-11-19T14:43:06.143949+00:00",
+      "policies": {
+        "all_frontier": {
+          "tasks": 50,
+          "judged": 50,
+          "judge_failures": 0,
+          "verified_by_verifier": 35,
+          "judged_by_llm": 15,
+          "passed": 46,
+          "failed": 4,
+          "success_rate": 0.92,
+          "cpst_usd": 0.00029273532608695656,
+          "pass_cost_usd": 0.013465825000000002,
+          "failed_cost_usd": 0.0017398460000000002,
+          "judge_cost_usd": 0.023882563000000002,
+          "all_in_cpst_usd": 0.0008119214782608697
+        },
+        "cascade": {
+          "tasks": 50,
+          "judged": 50,
+          "judge_failures": 0,
+          "verified_by_verifier": 35,
+          "judged_by_llm": 15,
+          "passed": 43,
+          "failed": 7,
+          "success_rate": 0.86,
+          "cpst_usd": 0.00010845748837209302,
+          "pass_cost_usd": 0.004663672,
+          "failed_cost_usd": 0.001071214,
+          "judge_cost_usd": 0.019743655,
+          "all_in_cpst_usd": 0.0005676122558139535
+        },
+        "all_small": {
+          "tasks": 50,
+          "judged": 50,
+          "judge_failures": 0,
+          "verified_by_verifier": 35,
+          "judged_by_llm": 15,
+          "passed": 40,
+          "failed": 10,
+          "success_rate": 0.8,
+          "cpst_usd": 2.2966749999999995e-05,
+          "pass_cost_usd": 0.0009186699999999998,
+          "failed_cost_usd": 0.000544132,
+          "judge_cost_usd": 0.020855647,
+          "all_in_cpst_usd": 0.0005443579250000001
+        }
+      }
+    },
+    {
+      "run": 3,
+      "generated_at": "2026-11-19T15:06:51.355642+00:00",
+      "policies": {
+        "all_frontier": {
+          "tasks": 50,
+          "judged": 50,
+          "judge_failures": 0,
+          "verified_by_verifier": 35,
+          "judged_by_llm": 15,
+          "passed": 45,
+          "failed": 5,
+          "success_rate": 0.9,
+          "cpst_usd": 0.0002787568,
+          "pass_cost_usd": 0.012544056000000001,
+          "failed_cost_usd": 0.003006862,
+          "judge_cost_usd": 0.016304387000000004,
+          "all_in_cpst_usd": 0.0006410765111111112
+        },
+        "cascade": {
+          "tasks": 50,
+          "judged": 50,
+          "judge_failures": 0,
+          "verified_by_verifier": 35,
+          "judged_by_llm": 15,
+          "passed": 44,
+          "failed": 6,
+          "success_rate": 0.88,
+          "cpst_usd": 8.055413636363637e-05,
+          "pass_cost_usd": 0.003544382,
+          "failed_cost_usd": 0.001867683,
+          "judge_cost_usd": 0.017778878999999997,
+          "all_in_cpst_usd": 0.0004846195681818181
+        },
+        "all_small": {
+          "tasks": 50,
+          "judged": 50,
+          "judge_failures": 0,
+          "verified_by_verifier": 35,
+          "judged_by_llm": 15,
+          "passed": 41,
+          "failed": 9,
+          "success_rate": 0.82,
+          "cpst_usd": 2.4706219512195117e-05,
+          "pass_cost_usd": 0.0010129549999999998,
+          "failed_cost_usd": 0.000453461,
+          "judge_cost_usd": 0.019306696999999998,
+          "all_in_cpst_usd": 0.0004956012682926828
+        }
+      }
+    }
+  ],
+  "threshold_sweep": [
+    {
+      "threshold": 0.0,
+      "escalation_rate": 0.0,
+      "judged_success": 0.8,
+      "total_cost_usd": 0.001471,
+      "cpst_usd": 2.3e-05
+    },
+    {
+      "threshold": 0.6,
+      "escalation_rate": 0.0,
+      "judged_success": 0.8,
+      "total_cost_usd": 0.001471,
+      "cpst_usd": 2.3e-05
+    },
+    {
+      "threshold": 0.625,
+      "escalation_rate": 0.0,
+      "judged_success": 0.8,
+      "total_cost_usd": 0.001471,
+      "cpst_usd": 2.3e-05
+    },
+    {
+      "threshold": 0.65,
+      "escalation_rate": 0.0,
+      "judged_success": 0.8,
+      "total_cost_usd": 0.001471,
+      "cpst_usd": 2.3e-05
+    },
+    {
+      "threshold": 0.675,
+      "escalation_rate": 0.0,
+      "judged_success": 0.8,
+      "total_cost_usd": 0.001471,
+      "cpst_usd": 2.3e-05
+    },
+    {
+      "threshold": 0.7,
+      "escalation_rate": 0.0,
+      "judged_success": 0.8,
+      "total_cost_usd": 0.001471,
+      "cpst_usd": 2.3e-05
+    },
+    {
+      "threshold": 0.725,
+      "escalation_rate": 0.0,
+      "judged_success": 0.8,
+      "total_cost_usd": 0.001471,
+      "cpst_usd": 2.3e-05
+    },
+    {
+      "threshold": 0.75,
+      "escalation_rate": 0.0,
+      "judged_success": 0.8,
+      "total_cost_usd": 0.001471,
+      "cpst_usd": 2.3e-05
+    },
+    {
+      "threshold": 0.775,
+      "escalation_rate": 0.0,
+      "judged_success": 0.8,
+      "total_cost_usd": 0.001471,
+      "cpst_usd": 2.3e-05
+    },
+    {
+      "threshold": 0.8,
+      "escalation_rate": 0.0,
+      "judged_success": 0.8,
+      "total_cost_usd": 0.001471,
+      "cpst_usd": 2.3e-05
+    },
+    {
+      "threshold": 0.825,
+      "escalation_rate": 0.04,
+      "judged_success": 0.8,
+      "total_cost_usd": 0.002705,
+      "cpst_usd": 3.7e-05
+    },
+    {
+      "threshold": 0.85,
+      "escalation_rate": 0.12,
+      "judged_success": 0.82,
+      "total_cost_usd": 0.005256,
+      "cpst_usd": 7.7e-05
+    },
+    {
+      "threshold": 0.875,
+      "escalation_rate": 0.2,
+      "judged_success": 0.84,
+      "total_cost_usd": 0.008253,
+      "cpst_usd": 0.000148
+    },
+    {
+      "threshold": 0.9,
+      "escalation_rate": 0.36,
+      "judged_success": 0.88,
+      "total_cost_usd": 0.013555,
+      "cpst_usd": 0.000246
+    },
+    {
+      "threshold": 0.925,
+      "escalation_rate": 0.46,
+      "judged_success": 0.9,
+      "total_cost_usd": 0.014592,
+      "cpst_usd": 0.000243
+    },
+    {
+      "threshold": 0.95,
+      "escalation_rate": 0.5,
+      "judged_success": 0.9,
+      "total_cost_usd": 0.014892,
+      "cpst_usd": 0.00025
+    },
+    {
+      "threshold": 1.0,
+      "escalation_rate": 0.58,
+      "judged_success": 0.92,
+      "total_cost_usd": 0.016853,
+      "cpst_usd": 0.000287
+    }
+  ]
+}

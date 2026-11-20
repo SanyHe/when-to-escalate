@@ -1,6 +1,92 @@
 # 02 · Method and Implementation
 
-> How the ledger is computed, how routing works, how the engine escalates, and how the gateway is exposed. File references are at the end of each section.
+> The routing infrastructure for an always-on agent, in two layers. The **personal policy layer** decides which model tier a decision point is even allowed to use (buckets + hard constraints); the **cascade engine** (§1–§9) decides small → frontier within an allowed, routable bucket. How the ledger is computed, how routing works, how the engine escalates, and how the gateway is exposed. File references are at the end of each section.
+
+## 0 · Always-on agent: two layers
+
+This project splits the routing job into two layers that are deliberately
+independent:
+
+1. **Personal policy layer** — resolves one bucket per decision point, *before
+   any model call*. Pure function, deterministic, no network.
+   [`cascade/src/personal_policy.py`](../../cascade/src/personal_policy.py) +
+   [`cascade/configs/personal_policy.yaml`](../../cascade/configs/personal_policy.yaml).
+2. **Cascade engine layer** — within a bucket allowed to escalate, decides
+   small → frontier. §1–§9 below describe this layer.
+
+### Decision buckets (B0–B5)
+
+`assign_bucket(decision, config)` resolves one bucket with this resolution order
+(first match wins): **hard constraints → consequence → latency → classifier
+uncertainty** (consequence confidence below `consequence_confidence_floor` =
+0.80 steps the bucket up one level: read → suggest → reversible → irreversible).
+
+| Bucket | Model | Confirmation | Verifier | Escalate | SLO |
+|---|---|---|---|---|---|
+| `B0_sense` | `none` | none | rule | no | 200 ms |
+| `B1_read` | `small` | none | none | no | 2 s |
+| `B2_draft` | `small` | inline | schema | on failure | 3 s |
+| `B3_act_reversible` | `small` | after_the_fact | tool_result | on failure | 5 s |
+| `B4_act_irreversible` | `frontier` | required | human | no | 10 s |
+| `B5_background` | `small` | none | sample | no | 60 s (batch) |
+
+Only `B2_draft` and `B3_act_reversible` may escalate to the frontier
+(`routing.enabled_buckets`); every other bucket keeps a fixed model so cost and
+risk stay predictable.
+
+### Hard constraints
+
+`hard_constraints` run before any cost optimisation and can override the bucket:
+
+- `local_only` — data never leaves the device: force the `local` model, never
+  escalate; queue if the local model is unavailable.
+- `user_absent_irreversible` — an irreversible write while `user_present` is
+  false is queued for confirmation.
+- `degraded_device` — `low_battery` / `weak_network` defer paid work to
+  `B5_background`; `B0_sense` is preserved.
+- `budget_exhausted` — only `B0_sense` / `B1_read` / `B2_draft` may run; the
+  rest are deferred.
+
+### Promotion gates
+
+A bucket is promoted to quality routing only when `check_promotion(stats,
+config)` reports *every* gate green:
+
+| Gate | Threshold |
+|---|---|
+| decisions | ≥ 300 |
+| verifier coverage | ≥ 0.90 |
+| small-model accept rate | ≥ 0.80 |
+| cost reduction | ≥ 0.10 |
+| error-rate ratio | ≤ 1.20 |
+
+### Telemetry: the agent's verifier is user behaviour
+
+An always-on agent has no separate test harness — the verifier is what the user
+does next. [`cascade/src/telemetry.py`](../../cascade/src/telemetry.py) records
+one JSONL line per decision point with a fixed 27-field contract
+(`FIELD_ORDER`); `build_event()` validates and emits every field, and unknown
+fields are rejected so the schema stays stable.
+
+Required fields: `decision_id`, `ts`, `bucket`, `model`, `outcome`. Outcomes:
+`pending`, `user_accepted`, `user_edited`, `user_undone`, `ignored`, `failed`.
+Without `user_edited` and `user_undone`, the agent has no verifier at all.
+
+`summarize_events()` aggregates per bucket: decision count, escalation count,
+accept rate, undo rate, error rate, average cost and average latency. These are
+the numbers that feed the promotion gates.
+
+### Current status of this layer
+
+The policy layer and telemetry are **offline and simulated today**.
+[`cascade/src/replay_decisions.py`](../../cascade/src/replay_decisions.py)
+proves the buckets, hard constraints and telemetry add up to usable
+bucket-level numbers from fixed priors (see
+[`data/telemetry/replay_summary.md`](../../data/telemetry/replay_summary.md) —
+outcomes, tokens and latencies are synthetic; prices are illustrative). The
+layer is **not yet wired into the live gateway**: `gateway.py` / `engine.py`
+serve the cascade engine directly, so the buckets above describe the policy the
+agent *should* apply, not a path that is already live.
 
 ## 1. End-to-end path
 

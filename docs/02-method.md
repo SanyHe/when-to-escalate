@@ -1,6 +1,72 @@
 # 02 · 方法与实现
 
-> 本文描述"账本如何算、路由如何做、引擎如何升级、网关如何对外"。代码位置见每节末尾。
+> 面向常驻 agent 的路由基础设施，分两层：**个人策略层**决定一个决策点允许使用哪一档模型（分桶 + 硬约束）；**级联引擎**（§1–§9）在被允许且可路由的桶内决定小模型 → 旗舰。本文其余部分说明账本如何算、路由如何做、引擎如何升级、网关如何对外。代码位置见每节末尾。
+
+## 0 · Always-on Agent：两层架构
+
+本项目把路由拆成刻意相互独立的两层：
+
+1. **个人策略层** —— 为每个决策点解析一个桶，在*任何模型调用之前*。纯函数、确定性、不碰网络。
+   [`cascade/src/personal_policy.py`](../cascade/src/personal_policy.py) +
+   [`cascade/configs/personal_policy.yaml`](../cascade/configs/personal_policy.yaml)。
+2. **级联引擎层** —— 在被允许升级的桶内，决定小模型 → 旗舰。下文 §1–§9 描述这一层。
+
+### 决策桶（B0–B5）
+
+`assign_bucket(decision, config)` 按以下顺序解析桶（先匹配先生效）：**硬约束 → 后果 → 时延 → 分类器不确定**（后果置信度低于 `consequence_confidence_floor` = 0.80 时向上提一档：读取 → 建议 → 可逆 → 不可逆）。
+
+| 桶 | 模型 | 确认方式 | 验证器 | 升级 | SLO |
+|---|---|---|---|---|---|
+| `B0_sense` | `none` | none | rule | 否 | 200 ms |
+| `B1_read` | `small` | none | none | 否 | 2 s |
+| `B2_draft` | `small` | inline | schema | 失败时 | 3 s |
+| `B3_act_reversible` | `small` | after_the_fact | tool_result | 失败时 | 5 s |
+| `B4_act_irreversible` | `frontier` | required | human | 否 | 10 s |
+| `B5_background` | `small` | none | sample | 否 | 60 s（批处理） |
+
+只有 `B2_draft` 与 `B3_act_reversible` 可以升级到旗舰（`routing.enabled_buckets`）；其余桶保持固定模型，让成本与风险可预测。
+
+### 硬约束
+
+`hard_constraints` 在任何成本优化之前执行，可覆盖桶归属：
+
+- `local_only` —— 数据永不离开设备：强制 `local` 模型、永不升级；本地模型不可用时排队。
+- `user_absent_irreversible` —— `user_present` 为 false 时的不可逆写排队等候确认。
+- `degraded_device` —— `low_battery` / `weak_network` 把付费工作推迟到 `B5_background`；`B0_sense` 保留。
+- `budget_exhausted` —— 只放行 `B0_sense` / `B1_read` / `B2_draft`，其余推迟。
+
+### 晋升门槛
+
+一个桶只有在 `check_promotion(stats, config)` 报告*全部*门槛通过时，才会被晋升到质量路由：
+
+| 门槛 | 阈值 |
+|---|---|
+| 决策数 | ≥ 300 |
+| 验证器覆盖率 | ≥ 0.90 |
+| 小模型接受率 | ≥ 0.80 |
+| 成本降低 | ≥ 0.10 |
+| 错误率比值 | ≤ 1.20 |
+
+### 遥测：agent 的验证器就是用户行为
+
+常驻 agent 没有独立的测试环境——验证器就是用户接下来的动作。
+[`cascade/src/telemetry.py`](../cascade/src/telemetry.py) 为每个决策点记录一行 JSONL，固定 27 字段契约（`FIELD_ORDER`）；`build_event()` 校验并输出全部字段，拒绝未知字段以保持 schema 稳定。
+
+必填字段：`decision_id`、`ts`、`bucket`、`model`、`outcome`。结果枚举：
+`pending`、`user_accepted`、`user_edited`、`user_undone`、`ignored`、`failed`。
+没有 `user_edited` 与 `user_undone`，agent 就根本没有验证器。
+
+`summarize_events()` 按桶汇总：决策数、升级数、接受率、撤销率、错误率、平均成本与平均延迟。这些就是晋升门槛的输入。
+
+### 该层当前状态
+
+策略层与遥测目前是**离线且模拟的**。
+[`cascade/src/replay_decisions.py`](../cascade/src/replay_decisions.py)
+用固定先验证明分桶、硬约束与遥测能汇总出可用的桶级数字（见
+[`data/telemetry/replay_summary.md`](../data/telemetry/replay_summary.md)——
+结果、token 数与延迟都是合成的，价格是示例值）。该层**尚未接入在线网关**：
+`gateway.py` / `engine.py` 直接服务级联引擎，因此上面的桶描述的是 agent *应该*
+应用的策略，而不是一条已经在线的路径。
 
 ## 1. 总体链路
 

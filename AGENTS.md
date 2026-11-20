@@ -46,6 +46,7 @@ A feature is done when all of the following are true:
 | Verify web metrics | `node cascade/tests/verify_web_metrics.js` |
 | Regenerate seed tasks | `python3 cascade/src/gen_tasks.py` |
 | Build the three-policy mock ledger | `python3 cascade/src/replay.py` |
+| Build the panel real-results summary | `python3 cascade/src/build_web_real.py` (writes `web/data/real_summary.json` from the committed judged ledgers; checked by `verify_web_metrics.js`) |
 | Run the real three-policy eval | `python3 cascade/src/real_eval.py --limit 50 --max-tokens 1024 --threshold 0.85 --small-model qwen-plus --frontier-model qwen-max --pricing cascade/configs/pricing.qwen.yaml` |
 | Judge a real ledger offline | `CASCADE_JUDGE_MODEL=<judge-model> CASCADE_JUDGE_LABEL=external-non-qwen-judge python3 cascade/src/judge_ledger.py --ledger data/eval/real_ledger.json` |
 | Rebuild the threshold sweep only (no API calls) | `python3 cascade/src/judge_ledger.py --ledger data/eval/real_ledger_judged.json --sweep-only` |

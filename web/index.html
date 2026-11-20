@@ -37,6 +37,24 @@
 
     <div class="banner hidden" id="banner"></div>
 
+    <section class="panel real-panel" id="realPanel">
+      <div class="panel-head">
+        <div>
+          <h2 data-i18n="real.title">实测结果</h2>
+          <p class="muted" id="realSub" data-i18n="real.sub">真实后端评测 · 3 轮均值</p>
+        </div>
+        <span class="badge badge-ok" id="realBadge" data-i18n="real.badge">REAL · 实测</span>
+      </div>
+      <div class="real-content" id="realContent">
+        <div class="list-empty" data-i18n="real.loading">加载实测结果…</div>
+      </div>
+    </section>
+
+    <details class="sandbox-details" id="sandboxDetails">
+      <summary id="sandboxSummary" class="sandbox-toggle">—</summary>
+
+      <p class="sandbox-note muted" data-i18n="sandbox.note">以下为可交互的 mock 沙盒（确定性合成轨迹 + 示例定价），用于演示口径与 what-if 推演，不代表实测结果。</p>
+
     <section class="panel live-panel">
       <div class="panel-head">
         <div>
@@ -122,6 +140,7 @@
         </div>
       </section>
     </main>
+    </details>
 
     <footer>
       <p data-i18n-html="footer">
