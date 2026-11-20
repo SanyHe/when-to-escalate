@@ -8,7 +8,7 @@
 set -euo pipefail
 
 # ---- Edit these for your project ----
-INSTALL_CMD="python3 -m pip install --quiet jsonschema pyyaml pytest fastapi httpx uvicorn"
+INSTALL_CMD="python3 -m pip install --quiet jsonschema pyyaml pytest fastapi httpx uvicorn numpy scikit-learn"
 VERIFY_CMD="python3 -m pytest cascade/tests/ -q && node cascade/tests/verify_web_metrics.js"
 START_CMD="python3 -m http.server 8765 --directory web"
 # --------------------------------------

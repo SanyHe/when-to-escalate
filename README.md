@@ -205,7 +205,7 @@ Key invariants the diagram encodes:
 ## Quick start (offline, no GPU, no API key)
 
 ```bash
-python3 -m pip install jsonschema pyyaml pytest fastapi httpx uvicorn
+python3 -m pip install jsonschema pyyaml pytest fastapi httpx uvicorn numpy scikit-learn
 
 # 1. Rebuild the synthetic task flow and the three-policy mock ledger.
 python3 cascade/src/gen_tasks.py

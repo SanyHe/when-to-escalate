@@ -166,7 +166,7 @@ flowchart TD
 ## 快速开始（离线，无 GPU、无 API Key）
 
 ```bash
-python3 -m pip install jsonschema pyyaml pytest fastapi httpx uvicorn
+python3 -m pip install jsonschema pyyaml pytest fastapi httpx uvicorn numpy scikit-learn
 
 # 1. 重建合成任务流与三策略 mock 账本
 python3 cascade/src/gen_tasks.py

@@ -41,7 +41,7 @@ A feature is done when all of the following are true:
 
 | Purpose | Command |
 |---|---|
-| Install dev deps | `pip install jsonschema pyyaml pytest fastapi httpx uvicorn` |
+| Install dev deps | `pip install jsonschema pyyaml pytest fastapi httpx uvicorn numpy scikit-learn` |
 | Verify (tests) | `python3 -m pytest cascade/tests/ -v` |
 | Verify web metrics | `node cascade/tests/verify_web_metrics.js` |
 | Regenerate seed tasks | `python3 cascade/src/gen_tasks.py` |
